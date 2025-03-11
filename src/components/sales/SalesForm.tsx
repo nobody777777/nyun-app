@@ -22,7 +22,8 @@ export default function SalesForm() {
         sale_id: sale.id,
         item_name: item.name,
         quantity: item.quantity,
-        price: item.price
+        price: item.price,
+        subtotal: item.quantity * item.price
       }))
 
       await addSaleItems(saleItems)

@@ -3,6 +3,12 @@ import { useEffect, useState } from 'react'
 import { getWeather } from '@/lib/weather-api'
 import { supabase } from '@/lib/supabase'
 
+// Definisikan tipe untuk payload
+interface UserSettings {
+  location: string;
+  [key: string]: any;
+}
+
 export default function WeatherDisplay() {
   const [weather, setWeather] = useState<any>(null)
   const [location, setLocation] = useState('Indramayu')
@@ -43,9 +49,11 @@ export default function WeatherDisplay() {
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'user_settings' },
         async (payload) => {
-          if (payload.new?.location) {
-            setLocation(payload.new.location)
-            const weatherData = await getWeather(payload.new.location)
+          // Gunakan type assertion untuk payload.new
+          const newSettings = payload.new as UserSettings | null;
+          if (newSettings?.location) {
+            setLocation(newSettings.location)
+            const weatherData = await getWeather(newSettings.location)
             setWeather(weatherData)
           }
         }

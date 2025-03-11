@@ -1,19 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    webpack: (config) => {
-      config.module.rules.push({
-        test: /\.(ts|tsx)$/,
-        use: [
-          {
-            loader: 'babel-loader',
-            options: {
-              presets: ['next/babel'],
-            },
-          },
-        ],
-      })
-      return config
-    }
+  reactStrictMode: true,
+  // Gunakan SWC compiler bawaan Next.js
+  experimental: {
+    forceSwcTransforms: true,
   }
-  
-  module.exports = nextConfig
+}
+
+module.exports = nextConfig
