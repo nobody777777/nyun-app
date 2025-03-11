@@ -73,14 +73,14 @@ export default function Sidebar() {
       {/* Sidebar */}
       <aside 
         className={`fixed left-0 top-0 h-screen bg-white shadow-lg transition-all duration-300 ease-in-out z-40 ${
-          isOpen ? 'w-64' : 'w-0'
+          isOpen ? 'w-64 translate-x-0' : 'w-0 -translate-x-full md:translate-x-0 md:w-0'
         } overflow-hidden`}
       >
         <div className={`h-full w-64 ${isOpen ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}>
           {/* Tombol Tutup di dalam Sidebar */}
           <button 
             onClick={toggleSidebar}
-            className="absolute top-2 right-2 p-2 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100"
+            className="absolute top-2 right-2 p-2 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100 md:hidden"
             aria-label="Close Sidebar"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -94,10 +94,10 @@ export default function Sidebar() {
             <div className="flex items-center gap-2 px-2 mb-6 mt-8">
               <span className="text-2xl">🍞</span>
               <div>
-                <h1 className="text-lg font-bold text-gray-800">DI BUAT OLEH</h1>
-                <h1 className="text-lg font-bold text-gray-800">PROF.RIDWAN</h1>
-                <h1 className="text-lg font-bold text-gray-800">SPD.MPD.DRS</h1>
-                <h1 className="text-lg font-bold text-gray-800">SPBU.RI</h1>
+                <h1 className="text-sm sm:text-lg font-bold text-gray-800">DI BUAT OLEH</h1>
+                <h1 className="text-sm sm:text-lg font-bold text-gray-800">PROF.RIDWAN</h1>
+                <h1 className="text-sm sm:text-lg font-bold text-gray-800">SPD.MPD.DRS</h1>
+                <h1 className="text-sm sm:text-lg font-bold text-gray-800">SPBU.RI</h1>
               </div>
             </div>
 
@@ -125,7 +125,7 @@ export default function Sidebar() {
 
             {/* Info di bagian bawah */}
             <div className="absolute bottom-4 left-2 right-2 p-3 bg-gray-50 rounded-lg">
-              <div className="text-sm text-gray-600 space-y-2">
+              <div className="text-xs sm:text-sm text-gray-600 space-y-2">
                 <p className="flex items-center gap-2">
                   <span>📍</span>
                   <span>Desa Plumbon, Indramayu</span>
@@ -143,13 +143,13 @@ export default function Sidebar() {
       {/* Overlay untuk menutup sidebar saat klik di luar (khusus mobile) */}
       {isOpen && isMobile && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-30"
+          className="fixed inset-0 bg-black bg-opacity-50 z-30 backdrop-blur-sm"
           onClick={toggleSidebar}
         />
       )}
 
       {/* Spacer untuk konten utama */}
-      <div className={`transition-all duration-300 ${isOpen ? 'md:ml-64' : 'ml-0'}`} />
+      <div className={`transition-all duration-300 ${isOpen && !isMobile ? 'md:ml-64' : 'ml-0'}`} />
     </>
   )
 } 

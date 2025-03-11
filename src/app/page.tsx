@@ -94,7 +94,7 @@ export default function HomePage() {
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
           {/* Konten Utama */}
-          <div className="lg:col-span-2 space-y-3 sm:space-y-4 md:space-y-6">
+          <div className="lg:col-span-2 space-y-3 sm:space-y-4 md:space-y-6 order-2 lg:order-1">
             {/* Header */}
             <div className="bg-white rounded-xl shadow-md p-3 sm:p-4 md:p-6">
               <h1 className="text-xl sm:text-2xl font-bold text-gray-800 mb-1 sm:mb-2">
@@ -114,7 +114,7 @@ export default function HomePage() {
           </div>
 
           {/* Sidebar Content */}
-          <div className="space-y-3 sm:space-y-4 md:space-y-6">
+          <div className="space-y-3 sm:space-y-4 md:space-y-6 order-1 lg:order-2">
             {/* Weather Display */}
             <Suspense fallback={<div className="animate-pulse h-36 sm:h-48 bg-gray-200 rounded-xl" />}>
               <WeatherDisplay />
