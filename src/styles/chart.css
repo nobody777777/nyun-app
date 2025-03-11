@@ -1,0 +1,66 @@
+/* Animasi untuk container chart */
+.chart-container {
+  @apply relative transition-all duration-300 ease-in-out;
+}
+
+.chart-container:hover {
+  @apply transform scale-[1.01] shadow-lg;
+}
+
+/* Styling untuk tombol toggle */
+.chart-toggle-button {
+  @apply flex items-center gap-2 px-4 py-2 rounded-full 
+         transition-all duration-300 ease-in-out
+         hover:scale-105 hover:shadow-md
+         active:scale-95;
+}
+
+.chart-toggle-button.active-roti {
+  @apply bg-blue-100 text-blue-600 shadow-sm;
+}
+
+.chart-toggle-button.active-omset {
+  @apply bg-green-100 text-green-600 shadow-sm;
+}
+
+.chart-toggle-button.inactive {
+  @apply bg-gray-100 text-gray-400;
+}
+
+/* Animasi untuk card ringkasan */
+.summary-card {
+  @apply p-4 rounded-lg transition-all duration-300
+         hover:shadow-md hover:scale-[1.02]
+         cursor-pointer;
+}
+
+.summary-card.roti {
+  @apply bg-blue-50/50 hover:bg-blue-50;
+}
+
+.summary-card.omset {
+  @apply bg-green-50/50 hover:bg-green-50;
+}
+
+/* Animasi loading */
+.chart-loading {
+  @apply flex items-center justify-center min-h-[400px];
+}
+
+.loading-spinner {
+  @apply w-12 h-12 border-4 border-blue-200 border-t-blue-500
+         rounded-full animate-spin;
+}
+
+/* Tooltip custom */
+.chart-tooltip {
+  @apply bg-white/90 backdrop-blur-sm
+         border border-gray-200
+         rounded-lg shadow-lg
+         p-4;
+}
+
+/* Animasi untuk point hover */
+.point-highlight {
+  @apply animate-pulse;
+} 

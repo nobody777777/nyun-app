@@ -1,0 +1,40 @@
+{
+  "name": "nyun",
+  "private": true,
+  "version": "0.1.0",
+  "main": "electron/main.mjs",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@chakra-ui/react": "^2.0.0",
+    "@next/swc-win32-x64-msvc": "^15.2.1",
+    "@supabase/supabase-js": "latest",
+    "chart.js": "^4.4.1",
+    "date-fns": "^2.30.0",
+    "next": "latest",
+    "react": "^18.2.0",
+    "react-chartjs-2": "^5.2.0",
+    "react-dom": "^18.2.0",
+    "tailwindcss": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react-swc": "^3.5.0",
+    "autoprefixer": "^10.4.19",
+    "concurrently": "^9.1.0",
+    "cross-env": "^7.0.3",
+    "electron-builder": "^25.1.8",
+    "eslint": "^8.57.0",
+    "eslint-plugin-react": "^7.34.3",
+    "eslint-plugin-react-hooks": "^4.6.2",
+    "eslint-plugin-react-refresh": "^0.4.7",
+    "postcss": "^8.4.39",
+    "vite": "^5.3.4",
+    "wait-on": "^8.0.1"
+  }
+}

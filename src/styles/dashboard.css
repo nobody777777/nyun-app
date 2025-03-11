@@ -1,0 +1,107 @@
+/* Layout Dashboard */
+.dashboard-container {
+  @apply min-h-screen bg-gray-50;
+}
+
+.dashboard-content {
+  @apply container mx-auto px-4 py-6 space-y-6;
+}
+
+/* Header Dashboard */
+.dashboard-header {
+  @apply bg-white rounded-xl shadow-md p-6 mb-8
+         flex justify-between items-center;
+}
+
+.welcome-text {
+  @apply text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-400
+         bg-clip-text text-transparent;
+}
+
+.date-display {
+  @apply text-gray-500 text-sm;
+}
+
+/* Card Ringkasan */
+.summary-grid {
+  @apply grid grid-cols-1 md:grid-cols-3 gap-6;
+}
+
+.summary-card {
+  @apply bg-white rounded-xl shadow-md p-6
+         transition-all duration-300 hover:shadow-lg hover:scale-[1.02]
+         border-l-4;
+}
+
+.summary-card.sales {
+  @apply border-blue-500;
+}
+
+.summary-card.revenue {
+  @apply border-green-500;
+}
+
+.summary-card.average {
+  @apply border-purple-500;
+}
+
+.card-title {
+  @apply text-gray-500 text-sm mb-2 flex items-center gap-2;
+}
+
+.card-value {
+  @apply text-2xl font-bold;
+}
+
+.card-value.sales {
+  @apply text-blue-600;
+}
+
+.card-value.revenue {
+  @apply text-green-600;
+}
+
+.card-value.average {
+  @apply text-purple-600;
+}
+
+/* Section Chart */
+.chart-section {
+  @apply bg-white rounded-xl shadow-md p-6;
+}
+
+/* Quick Actions */
+.quick-actions {
+  @apply grid grid-cols-2 md:grid-cols-4 gap-4;
+}
+
+.action-button {
+  @apply flex flex-col items-center justify-center
+         p-4 rounded-xl transition-all duration-300
+         hover:shadow-md hover:scale-[1.02]
+         active:scale-95;
+}
+
+.action-button.sales {
+  @apply bg-blue-50 text-blue-600 hover:bg-blue-100;
+}
+
+.action-button.inventory {
+  @apply bg-green-50 text-green-600 hover:bg-green-100;
+}
+
+.action-button.calculator {
+  @apply bg-purple-50 text-purple-600 hover:bg-purple-100;
+}
+
+.action-button.settings {
+  @apply bg-gray-50 text-gray-600 hover:bg-gray-100;
+}
+
+.action-icon {
+  @apply text-2xl mb-2;
+}
+
+.action-text {
+  @apply text-sm font-medium;
+} 

@@ -1,0 +1,188 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-rgb: 245, 245, 245;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: rgb(var(--background-rgb));
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c5c5c5;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Popup Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes scaleOut {
+  from {
+    transform: scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+.animate-fadeOut {
+  animation: fadeOut 0.3s ease-out forwards;
+}
+
+.animate-scaleIn {
+  animation: scaleIn 0.3s ease-out forwards;
+}
+
+.animate-scaleOut {
+  animation: scaleOut 0.3s ease-out forwards;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Card Styles */
+.card {
+  @apply bg-white rounded-xl shadow-md p-6 transition-all duration-300;
+}
+
+.card:hover {
+  @apply shadow-lg transform scale-[1.01];
+}
+
+/* Button Styles */
+.btn {
+  @apply px-4 py-2 rounded-lg transition-all duration-300
+         focus:outline-none focus:ring-2 focus:ring-offset-2;
+}
+
+.btn-primary {
+  @apply bg-blue-500 text-white hover:bg-blue-600
+         focus:ring-blue-500;
+}
+
+.btn-secondary {
+  @apply bg-gray-100 text-gray-700 hover:bg-gray-200
+         focus:ring-gray-500;
+}
+
+/* Input Styles */
+.input {
+  @apply w-full px-4 py-2 rounded-lg border border-gray-300
+         focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+         transition-all duration-300;
+}
+
+/* Badge Styles */
+.badge {
+  @apply px-2 py-1 rounded-full text-sm font-medium;
+}
+
+.badge-blue {
+  @apply bg-blue-100 text-blue-600;
+}
+
+.badge-green {
+  @apply bg-green-100 text-green-600;
+}
+
+.badge-red {
+  @apply bg-red-100 text-red-600;
+}
+
+/* Navigation Styles */
+.nav-link {
+  @apply flex items-center space-x-2 px-4 py-2 rounded-lg
+         transition-all duration-300;
+}
+
+.nav-link:hover {
+  @apply bg-gray-100;
+}
+
+.nav-link.active {
+  @apply bg-blue-50 text-blue-600;
+}
+
+/* Grid Layout */
+.grid-dashboard {
+  @apply grid grid-cols-1 lg:grid-cols-3 gap-6;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+  @apply animate-spin rounded-full h-8 w-8
+         border-4 border-gray-200 border-t-blue-500;
+}
+
+/* Tooltip */
+.tooltip {
+  @apply absolute invisible opacity-0 bg-gray-800 text-white
+         px-2 py-1 rounded text-sm -mt-8 transition-all duration-200;
+}
+
+.has-tooltip:hover .tooltip {
+  @apply visible opacity-100;
+} 
