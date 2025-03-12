@@ -34,9 +34,14 @@ export default function SalesChart() {
   const [loading, setLoading] = useState(true)
   const [salesData, setSalesData] = useState<any[]>([])
   const [activeDataset, setActiveDataset] = useState<string[]>(['roti'])
+  const [windowWidth, setWindowWidth] = useState(0)
 
   useEffect(() => {
-    fetchData()
+    // Update window width
+    const handleResize = () => setWindowWidth(window.innerWidth)
+    handleResize() // Initial call
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
   }, [])
 
   const fetchData = async () => {
@@ -55,6 +60,7 @@ export default function SalesChart() {
 
       if (error) throw error
 
+      console.log('Fetched Sales Data:', data)
       setSalesData(data || [])
     } catch (error) {
       console.error('Error fetching sales data:', error)
@@ -71,6 +77,10 @@ export default function SalesChart() {
       setActiveDataset([...activeDataset, dataset])
     }
   }
+
+  useEffect(() => {
+    fetchData()
+  }, [])
 
   if (loading) {
     return (
@@ -97,7 +107,9 @@ export default function SalesChart() {
         borderColor: 'rgb(59, 130, 246)', // blue-500
         backgroundColor: 'rgba(59, 130, 246, 0.1)',
         tension: 0.4,
-        fill: true
+        fill: true,
+        pointRadius: windowWidth < 640 ? 3 : 5,
+        pointBackgroundColor: 'blue'
       },
       {
         label: 'Total Omset (dalam ribuan)',
@@ -105,24 +117,33 @@ export default function SalesChart() {
         borderColor: 'rgb(34, 197, 94)', // green-500
         backgroundColor: 'rgba(34, 197, 94, 0.1)',
         tension: 0.4,
-        fill: true
+        fill: true,
+        pointRadius: windowWidth < 640 ? 3 : 5,
+        pointBackgroundColor: 'green'
       }
     ]
   }
 
   const options = {
     responsive: true,
-    interaction: {
-      mode: 'index' as const,
-      intersect: false,
-    },
+    maintainAspectRatio: false,
+    devicePixelRatio: window.devicePixelRatio || 1,
     plugins: {
       legend: {
-        position: 'top' as const,
+        display: true,
+        position: 'top',
+        labels: {
+          font: {
+            size: windowWidth < 640 ? 10 : 12
+          }
+        }
       },
       title: {
         display: true,
-        text: 'Grafik Penjualan 7 Hari Terakhir'
+        text: 'Grafik Penjualan 7 Hari Terakhir',
+        font: {
+          size: windowWidth < 640 ? 12 : 14
+        }
       },
       tooltip: {
         callbacks: {
@@ -142,20 +163,68 @@ export default function SalesChart() {
       }
     },
     scales: {
+      x: {
+        ticks: {
+          font: {
+            size: windowWidth < 640 ? 8 : 10
+          }
+        }
+      },
       y: {
         beginAtZero: true,
+        min: 0,
+        max: Math.max(...salesData.map(item => item.total_bread)) * 1.2,
         ticks: {
-          callback: function(value: any) {
-            return value.toLocaleString('id-ID')
+          font: {
+            size: windowWidth < 640 ? 8 : 10
           }
         }
       }
     }
   }
 
+  // Debug log
+  useEffect(() => {
+    console.log('Chart Render Debug:', {
+      salesDataLength: salesData.length,
+      labels: chartData.labels,
+      datasets: chartData.datasets.map(d => d.data)
+    })
+  }, [salesData])
+
   return (
-    <div className="chart-container bg-white rounded-xl shadow-md p-6">
-      <div className="flex justify-between items-center mb-6">
+    <div 
+      className="chart-container bg-white rounded-xl shadow-md p-6"
+      style={{ 
+        height: windowWidth < 640 ? '300px' : '400px', 
+        width: '100%',
+        position: 'relative'
+      }}
+    >
+      {salesData.length === 0 ? (
+        <div className="text-center text-gray-500">
+          Tidak ada data untuk ditampilkan
+        </div>
+      ) : (
+        <div style={{ 
+          width: '100%', 
+          height: '100%', 
+          position: 'relative' 
+        }}>
+          <Line 
+            data={chartData} 
+            options={options}
+            fallbackContent={
+              <div className="text-red-500 text-center w-full">
+                Gagal memuat grafik. Coba refresh halaman.
+              </div>
+            }
+            redraw={true}
+          />
+        </div>
+      )}
+
+      <div className="flex justify-between items-center mt-6 pt-6 border-t">
         <div>
           <h2 className="text-xl font-bold text-gray-800">Statistik Penjualan</h2>
           <p className="text-sm text-gray-500">7 hari terakhir</p>
@@ -187,16 +256,6 @@ export default function SalesChart() {
           </button>
         </div>
       </div>
-
-      {loading ? (
-        <div className="chart-loading">
-          <div className="loading-spinner"></div>
-        </div>
-      ) : (
-        <div className="relative">
-          <Line data={chartData} options={options} />
-        </div>
-      )}
 
       {/* Ringkasan dengan Animasi */}
       <div className="grid grid-cols-2 gap-4 mt-6 pt-6 border-t">

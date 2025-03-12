@@ -1,5 +1,5 @@
 // Nama cache
-const CACHE_NAME = 'pesugihan-cache-v1';
+const CACHE_NAME = 'pesugihan-cache-v1.0.1';
 
 // File yang akan di-cache
 const urlsToCache = [
@@ -66,3 +66,10 @@ self.addEventListener('fetch', (event) => {
       })
   );
 });
+
+// Tambahkan event listener untuk update
+self.addEventListener('message', (event) => {
+  if (event.data === 'SKIP_WAITING') {
+    self.skipWaiting()
+  }
+})
