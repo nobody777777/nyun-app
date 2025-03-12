@@ -46,10 +46,9 @@ export default function SalesChart() {
 
   const fetchData = async () => {
     try {
-      // Ambil data 7 hari terakhir
       const endDate = new Date()
       const startDate = new Date()
-      startDate.setDate(endDate.getDate() - 6) // 7 hari termasuk hari ini
+      startDate.setDate(endDate.getDate() - 6)
 
       const { data, error } = await supabase
         .from('daily_sales')
@@ -70,6 +69,10 @@ export default function SalesChart() {
     }
   }
 
+  useEffect(() => {
+    fetchData()
+  }, [])
+
   const toggleDataset = (dataset: string) => {
     if (activeDataset.includes(dataset)) {
       setActiveDataset(activeDataset.filter((d) => d !== dataset))
@@ -77,10 +80,6 @@ export default function SalesChart() {
       setActiveDataset([...activeDataset, dataset])
     }
   }
-
-  useEffect(() => {
-    fetchData()
-  }, [])
 
   if (loading) {
     return (
@@ -103,7 +102,10 @@ export default function SalesChart() {
     datasets: [
       {
         label: 'Total Roti Terjual',
-        data: salesData.map(item => item.total_bread),
+        data: salesData.map(item => {
+          const breadValue = Number(item.total_bread)
+          return isNaN(breadValue) ? 0 : breadValue
+        }),
         borderColor: 'rgb(59, 130, 246)', // blue-500
         backgroundColor: 'rgba(59, 130, 246, 0.1)',
         tension: 0.4,
@@ -113,7 +115,10 @@ export default function SalesChart() {
       },
       {
         label: 'Total Omset (dalam ribuan)',
-        data: salesData.map(item => item.total_sales / 1000), // Dibagi 1000 untuk skala yang lebih baik
+        data: salesData.map(item => {
+          const salesValue = Number(item.total_sales) / 1000
+          return isNaN(salesValue) ? 0 : salesValue
+        }),
         borderColor: 'rgb(34, 197, 94)', // green-500
         backgroundColor: 'rgba(34, 197, 94, 0.1)',
         tension: 0.4,
@@ -173,7 +178,7 @@ export default function SalesChart() {
       y: {
         beginAtZero: true,
         min: 0,
-        max: Math.max(...salesData.map(item => item.total_bread)) * 1.2,
+        max: Math.max(...salesData.map(item => Number(item.total_bread) || 0)) * 1.2,
         ticks: {
           font: {
             size: windowWidth < 640 ? 8 : 10
@@ -182,15 +187,6 @@ export default function SalesChart() {
       }
     }
   }
-
-  // Debug log
-  useEffect(() => {
-    console.log('Chart Render Debug:', {
-      salesDataLength: salesData.length,
-      labels: chartData.labels,
-      datasets: chartData.datasets.map(d => d.data)
-    })
-  }, [salesData])
 
   return (
     <div 
@@ -267,7 +263,7 @@ export default function SalesChart() {
         >
           <div className="text-sm text-gray-600">Total Roti Terjual</div>
           <div className="text-2xl font-bold text-blue-600">
-            {salesData.reduce((sum, item) => sum + item.total_bread, 0)
+            {salesData.reduce((sum, item) => sum + Number(item.total_bread), 0)
               .toLocaleString('id-ID')} biji
           </div>
         </div>
@@ -279,7 +275,7 @@ export default function SalesChart() {
         >
           <div className="text-sm text-gray-600">Total Omset</div>
           <div className="text-2xl font-bold text-green-600">
-            Rp {salesData.reduce((sum, item) => sum + item.total_sales, 0)
+            Rp {salesData.reduce((sum, item) => sum + Number(item.total_sales), 0)
               .toLocaleString('id-ID')}
           </div>
         </div>
