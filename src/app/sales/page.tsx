@@ -45,11 +45,16 @@ export default function SalesPage() {
     try {
       setSaving(true)
 
+      // Kurangi satu hari dari tanggal yang diinput untuk penyimpanan
+      const inputDate = new Date(date)
+      inputDate.setDate(inputDate.getDate() - 1)
+      const formattedDate = inputDate.toISOString().split('T')[0]
+
       if (editMode && currentEditId) {
         const { error } = await supabase
           .from('daily_sales')
           .update({
-            date,
+            date: formattedDate, // Disimpan di tanggal sebelumnya
             total_bread: parseInt(totalBread),
             total_sales: parseInt(totalSales)
           })
@@ -70,12 +75,12 @@ export default function SalesPage() {
         setTotalBread('')
         setTotalSales('')
         setDate(new Date().toISOString().split('T')[0])
-        await loadSalesData() // Tunggu data selesai diload
+        await loadSalesData()
       } else {
         const { error } = await supabase
           .from('daily_sales')
           .insert({
-            date,
+            date: formattedDate, // Disimpan di tanggal sebelumnya
             total_bread: parseInt(totalBread),
             total_sales: parseInt(totalSales)
           })
@@ -93,7 +98,7 @@ export default function SalesPage() {
         setTotalBread('')
         setTotalSales('')
         setDate(new Date().toISOString().split('T')[0])
-        await loadSalesData() // Tunggu data selesai diload
+        await loadSalesData()
       }
     } catch (error) {
       console.error('Error saving sales:', error)
@@ -261,11 +266,7 @@ export default function SalesPage() {
     
     const days: CalendarDay[] = []
     
-    // Perbaikan: Di Indonesia, Senin = 0, Minggu = 6
-    // Konversi dari sistem JS (Minggu = 0, Senin = 1, ...) ke sistem Indonesia
-    let firstDayWeekday = firstDayOfMonth.getDay() // 0 = Minggu, 1 = Senin, ...
-    
-    // Konversi ke format Indonesia (0 = Senin, 6 = Minggu)
+    let firstDayWeekday = firstDayOfMonth.getDay()
     firstDayWeekday = firstDayWeekday === 0 ? 6 : firstDayWeekday - 1
     
     // Tambah hari dari bulan sebelumnya
@@ -280,9 +281,15 @@ export default function SalesPage() {
     for (let date = 1; date <= lastDayOfMonth.getDate(); date++) {
       const currentDate = new Date(year, month, date)
       const dateString = currentDate.toISOString().split('T')[0]
+      
+      const sales = salesData.find(sale => {
+        const saleDateString = new Date(sale.date).toISOString().split('T')[0]
+        return saleDateString === dateString
+      })
+      
       days.push({
         date: currentDate,
-        sales: salesData.find(sale => sale.date === dateString),
+        sales: sales,
         isCurrentMonth: true
       })
     }
@@ -538,38 +545,44 @@ export default function SalesPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {salesData.map((sale) => (
-                    <tr key={sale.id} className="border-t hover:bg-gray-50">
-                      <td className="px-4 py-3 text-sm text-gray-700">
-                        {new Date(sale.date).toLocaleDateString('id-ID', {
-                          weekday: 'long',
-                          day: 'numeric',
-                          month: 'long',
-                          year: 'numeric'
-                        })}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-700">{sale.total_bread} biji</td>
-                      <td className="px-4 py-3 text-sm font-medium text-blue-600">
-                        {formatCurrency(sale.total_sales)}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <div className="flex justify-end gap-2">
-                          <button
-                            onClick={() => handleEdit(sale)}
-                            className="px-2 py-1 text-xs text-blue-600 hover:text-blue-800"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDelete(sale.id)}
-                            className="px-2 py-1 text-xs text-red-600 hover:text-red-800"
-                          >
-                            Hapus
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                  {salesData.map((sale) => {
+                    // Tambahkan satu hari ke tanggal untuk menampilkan
+                    const displayDate = new Date(sale.date)
+                    displayDate.setDate(displayDate.getDate() + 1)
+                    
+                    return (
+                      <tr key={sale.id} className="border-t hover:bg-gray-50">
+                        <td className="px-4 py-3 text-sm text-gray-700">
+                          {displayDate.toLocaleDateString('id-ID', {
+                            weekday: 'long',
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric'
+                          })}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-700">{sale.total_bread} biji</td>
+                        <td className="px-4 py-3 text-sm font-medium text-blue-600">
+                          {formatCurrency(sale.total_sales)}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex justify-end gap-2">
+                            <button
+                              onClick={() => handleEdit(sale)}
+                              className="px-2 py-1 text-xs text-blue-600 hover:text-blue-800"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDelete(sale.id)}
+                              className="px-2 py-1 text-xs text-red-600 hover:text-red-800"
+                            >
+                              Hapus
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
