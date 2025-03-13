@@ -3,10 +3,19 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import SalesChart from '@/components/charts/SalesChart'
 import '@/styles/dashboard.css'
+import { useSales } from '@/contexts/SalesContext'
+import { supabase } from '@/lib/supabase'
 
 export default function DashboardPage() {
   const [currentTime, setCurrentTime] = useState(new Date())
+  const { salesData, refreshData } = useSales()
+  const [todayStats, setTodayStats] = useState({
+    totalBread: 0,
+    totalSales: 0,
+    averageBread: 0
+  })
 
+  // Timer untuk waktu
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date())
@@ -14,6 +23,48 @@ export default function DashboardPage() {
 
     return () => clearInterval(timer)
   }, [])
+
+  // Mengambil data hari ini dan rata-rata
+  useEffect(() => {
+    const fetchTodayData = async () => {
+      try {
+        // Ambil data hari ini
+        const today = new Date().toISOString().split('T')[0]
+        const { data: todayData } = await supabase
+          .from('daily_sales')
+          .select('*')
+          .eq('date', today)
+          .single()
+
+        // Hitung rata-rata dari salesData
+        const totalDays = salesData.length || 1
+        const averageBread = Math.round(
+          salesData.reduce((sum, sale) => sum + sale.total_bread, 0) / totalDays
+        )
+
+        setTodayStats({
+          totalBread: todayData?.total_bread || 0,
+          totalSales: todayData?.total_sales || 0,
+          averageBread: averageBread
+        })
+
+      } catch (error) {
+        console.error('Error fetching today stats:', error)
+      }
+    }
+
+    fetchTodayData()
+  }, [salesData])
+
+  // Format currency
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(amount)
+  }
 
   return (
     <div className="dashboard-container">
@@ -46,7 +97,7 @@ export default function DashboardPage() {
               <span>Total Penjualan Hari Ini</span>
             </div>
             <div className="card-value sales">
-              150 Roti
+              {todayStats.totalBread} Roti
             </div>
           </div>
 
@@ -56,7 +107,7 @@ export default function DashboardPage() {
               <span>Total Omset Hari Ini</span>
             </div>
             <div className="card-value revenue">
-              Rp 750.000
+              {formatCurrency(todayStats.totalSales)}
             </div>
           </div>
 
@@ -66,7 +117,7 @@ export default function DashboardPage() {
               <span>Rata-rata Penjualan</span>
             </div>
             <div className="card-value average">
-              125 Roti/Hari
+              {todayStats.averageBread} Roti/Hari
             </div>
           </div>
         </div>

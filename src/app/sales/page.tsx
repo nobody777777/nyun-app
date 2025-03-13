@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import { usePopup } from '@/components/ui/PopupManager'
+import { useSales } from '@/contexts/SalesContext'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -23,16 +24,26 @@ interface CalendarDay {
 
 export default function SalesPage() {
   const { showPopup, closePopup } = usePopup()
+  const { currentMonth, setCurrentMonth, refreshData } = useSales()
   const [totalBread, setTotalBread] = useState('')
   const [totalSales, setTotalSales] = useState('')
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
   const [saving, setSaving] = useState(false)
   const [salesData, setSalesData] = useState<SalesRecord[]>([])
-  const [currentDate, setCurrentDate] = useState(new Date())
+  const [currentDate, setCurrentDate] = useState(() => {
+    return new Date(currentMonth.year, currentMonth.month - 1)
+  })
   const [loading, setLoading] = useState(true)
   const [editMode, setEditMode] = useState(false)
   const [currentEditId, setCurrentEditId] = useState<string | null>(null)
   const [reloadTrigger, setReloadTrigger] = useState(0)
+
+  useEffect(() => {
+    setCurrentMonth({
+      month: currentDate.getMonth() + 1,
+      year: currentDate.getFullYear()
+    })
+  }, [currentDate, setCurrentMonth])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -193,7 +204,7 @@ export default function SalesPage() {
                 )
                 
                 // Reload data
-                loadSalesData()
+                await loadSalesData()
                 
               } catch (error) {
                 console.error('Error:', error)
@@ -210,7 +221,6 @@ export default function SalesPage() {
     )
   }
 
-  // Modifikasi loadSalesData untuk memastikan data fresh
   const loadSalesData = async () => {
     try {
       setLoading(true)
@@ -243,6 +253,7 @@ export default function SalesPage() {
       console.log('Data berhasil diambil:', data)
       setSalesData(data || [])
       
+      await refreshData()
     } catch (error) {
       console.error('Error loading sales data:', error)
       showPopup('Error', 'Gagal memuat data penjualan', 'error')
@@ -251,12 +262,10 @@ export default function SalesPage() {
     }
   }
 
-  // Modifikasi useEffect untuk navigasi kalender
   useEffect(() => {
     loadSalesData()
   }, [currentDate]) // Hanya bergantung pada perubahan currentDate
 
-  // Fungsi untuk mendapatkan hari dalam kalender
   const getCalendarDays = (): CalendarDay[] => {
     const year = currentDate.getFullYear()
     const month = currentDate.getMonth()
@@ -417,107 +426,80 @@ export default function SalesPage() {
         </form>
 
         {/* Kalender */}
-        <div className="mt-12 bg-white rounded-xl shadow-md p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-bold text-gray-800">
-              Riwayat Penjualan
-            </h2>
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() - 1)))}
-                className="p-2 hover:bg-gray-100 rounded-full"
-              >
-                ←
-              </button>
-              <span className="font-medium">
-                {currentDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
-              </span>
-              <button
-                onClick={() => setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() + 1)))}
-                className="p-2 hover:bg-gray-100 rounded-full"
-              >
-                →
-              </button>
+        <div className="mt-12 bg-white rounded-xl shadow-md p-2 sm:p-6">
+          <div className="calendar-wrapper">
+            {/* Header Hari */}
+            <div className="calendar-header">
+              {['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'].map(day => (
+                <div key={day} className="font-medium text-gray-600">
+                  {day}
+                </div>
+              ))}
+            </div>
+
+            {/* Kalender Grid */}
+            <div className="calendar-grid">
+              {getCalendarDays().map((day, index) => (
+                <div
+                  key={index}
+                  className={`
+                    calendar-cell rounded-lg border
+                    ${day.isCurrentMonth ? 'bg-white' : 'bg-gray-50'}
+                    ${day.sales ? 'border-blue-200' : 'border-gray-200'}
+                  `}
+                >
+                  <div className="text-gray-500">
+                    {day.date.getDate()}
+                  </div>
+                  {day.sales ? (
+                    <>
+                      <div className="text-gray-600">
+                        {day.sales.total_bread} roti
+                      </div>
+                      <div className="font-medium text-blue-600">
+                        {formatCurrency(day.sales.total_sales)}
+                      </div>
+                      <div className="absolute bottom-0.5 right-0.5 flex gap-0.5">
+                        <button 
+                          onClick={() => handleEdit(day.sales!)}
+                          className="text-blue-500 hover:text-blue-700"
+                          title="Edit"
+                        >
+                          ✏️
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(day.sales!.id)}
+                          className="text-red-500 hover:text-red-700"
+                          title="Hapus"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    </>
+                  ) : day.isCurrentMonth ? (
+                    <div className="text-gray-400">
+                      Tidak ada data
+                    </div>
+                  ) : null}
+                </div>
+              ))}
             </div>
           </div>
+        </div>
 
-          {/* Header Hari */}
-          <div className="grid grid-cols-7 gap-4 mb-4">
-            {['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'].map(day => (
-              <div key={day} className="text-center font-medium text-gray-600">
-                {day}
+        {/* Total Bulanan */}
+        <div className="mt-6 pt-6 border-t">
+          <div className="flex justify-between items-center">
+            <div>
+              <div className="text-sm text-gray-600">Total Penjualan Bulan Ini</div>
+              <div className="text-xl font-bold text-blue-600">
+                {formatCurrency(salesData.reduce((sum, sale) => sum + sale.total_sales, 0))}
               </div>
-            ))}
-          </div>
-
-          {/* Kalender Grid */}
-          <div className="grid grid-cols-7 gap-4">
-            {getCalendarDays().map((day, index) => (
-              <div
-                key={index}
-                className={`
-                  aspect-square p-2 rounded-lg border relative
-                  ${day.isCurrentMonth 
-                    ? 'bg-white' 
-                    : 'bg-gray-50'
-                  }
-                  ${day.sales 
-                    ? 'border-blue-200' 
-                    : 'border-gray-200'
-                  }
-                `}
-              >
-                <div className="text-xs text-gray-500 mb-1">
-                  {day.date.getDate()}
-                </div>
-                {day.sales ? (
-                  <>
-                    <div className="text-xs text-gray-600 mb-1">
-                      {day.sales.total_bread} roti
-                    </div>
-                    <div className="text-sm font-medium text-blue-600">
-                      {formatCurrency(day.sales.total_sales)}
-                    </div>
-                    <div className="absolute bottom-1 right-1 flex gap-1">
-                      <button 
-                        onClick={() => handleEdit(day.sales!)}
-                        className="text-xs text-blue-500 hover:text-blue-700"
-                        title="Edit"
-                      >
-                        ✏️
-                      </button>
-                      <button 
-                        onClick={() => handleDelete(day.sales!.id)}
-                        className="text-xs text-red-500 hover:text-red-700"
-                        title="Hapus"
-                      >
-                        🗑️
-                      </button>
-                    </div>
-                  </>
-                ) : day.isCurrentMonth ? (
-                  <div className="text-xs text-gray-400">
-                    Tidak ada data
-                  </div>
-                ) : null}
-              </div>
-            ))}
-          </div>
-
-          {/* Total Bulanan */}
-          <div className="mt-6 pt-6 border-t">
-            <div className="flex justify-between items-center">
-              <div>
-                <div className="text-sm text-gray-600">Total Penjualan Bulan Ini</div>
-                <div className="text-xl font-bold text-blue-600">
-                  {formatCurrency(salesData.reduce((sum, sale) => sum + sale.total_sales, 0))}
-                </div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-600">Total Roti Terjual</div>
-                <div className="text-xl font-bold text-green-600">
-                  {salesData.reduce((sum, sale) => sum + sale.total_bread, 0)} biji
-                </div>
+            </div>
+            <div>
+              <div className="text-sm text-gray-600">Total Roti Terjual</div>
+              <div className="text-xl font-bold text-green-600">
+                {salesData.reduce((sum, sale) => sum + sale.total_bread, 0)} biji
               </div>
             </div>
           </div>

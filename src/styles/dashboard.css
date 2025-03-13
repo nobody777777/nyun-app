@@ -1,36 +1,56 @@
 /* Layout Dashboard */
 .dashboard-container {
   @apply min-h-screen bg-gray-50;
+  width: 100%;
+  max-width: 100%;
+  padding: 1rem;
+  overflow-x: hidden;
 }
 
 .dashboard-content {
   @apply container mx-auto px-4 py-6 space-y-6;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 /* Header Dashboard */
 .dashboard-header {
   @apply bg-white rounded-xl shadow-md p-6 mb-8
-         flex justify-between items-center;
+         flex justify-between items-center flex-wrap;
+  margin-bottom: 1.5rem;
 }
 
 .welcome-text {
   @apply text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-400
          bg-clip-text text-transparent;
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .date-display {
   @apply text-gray-500 text-sm;
+  font-size: 0.9rem;
+  color: #666;
 }
 
 /* Card Ringkasan */
 .summary-grid {
   @apply grid grid-cols-1 md:grid-cols-3 gap-6;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .summary-card {
   @apply bg-white rounded-xl shadow-md p-6
          transition-all duration-300 hover:shadow-lg hover:scale-[1.02]
          border-l-4;
+  background-color: white;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .summary-card.sales {
@@ -47,10 +67,17 @@
 
 .card-title {
   @apply text-gray-500 text-sm mb-2 flex items-center gap-2;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
 }
 
 .card-value {
   @apply text-2xl font-bold;
+  font-size: 1.5rem;
+  font-weight: bold;
 }
 
 .card-value.sales {
@@ -68,11 +95,21 @@
 /* Section Chart */
 .chart-section {
   @apply bg-white rounded-xl shadow-md p-6;
+  background-color: white;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow-x: auto;
 }
 
 /* Quick Actions */
 .quick-actions {
   @apply grid grid-cols-2 md:grid-cols-4 gap-4;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .action-button {
@@ -80,6 +117,19 @@
          p-4 rounded-xl transition-all duration-300
          hover:shadow-md hover:scale-[1.02]
          active:scale-95;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: white;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.2s, box-shadow 0.2s;
+  height: 100%;
+  min-height: 100px;
 }
 
 .action-button.sales {
@@ -100,8 +150,46 @@
 
 .action-icon {
   @apply text-2xl mb-2;
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .action-text {
   @apply text-sm font-medium;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+/* Media queries untuk perangkat yang sangat kecil */
+@media (max-width: 360px) {
+  .welcome-text {
+    font-size: 1.2rem;
+  }
+  
+  .card-title {
+    font-size: 0.8rem;
+  }
+  
+  .card-value {
+    font-size: 1.2rem;
+  }
+  
+  .action-button {
+    min-height: 80px;
+    padding: 0.75rem;
+  }
+  
+  .action-icon {
+    font-size: 1.2rem;
+  }
+  
+  .action-text {
+    font-size: 0.8rem;
+  }
+}
+
+/* Pastikan grafik tidak terpotong */
+canvas {
+  max-width: 100%;
+  height: auto !important;
 } 
