@@ -4,18 +4,18 @@ export const viewport: Viewport = {
   themeColor: '#000000',
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 5,
-  userScalable: true,
+  maximumScale: 1,
+  userScalable: false,
 }
 
 export const metadata: Metadata = {
-  title: 'Sistem Pesugihan',
-  description: 'Sistem pencatatan penjualan roti',
+  title: 'ROTI BAKAR BY KYZ',
+  description: 'Aplikasi untuk melacak penjualan roti',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'default',
-    title: 'Sistem Pesugihan'
+    statusBarStyle: 'black',
+    title: 'ROTI BAKAR BY KYZ'
   },
   icons: {
     icon: '/favicon.ico',

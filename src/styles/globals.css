@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Styling untuk kalender */
+.calendar-wrapper {
+  @apply w-full;
+}
+
+.calendar-header {
+  @apply grid grid-cols-7 gap-2 mb-4 text-center;
+}
+
+.calendar-grid {
+  @apply grid grid-cols-7 gap-2;
+}
+
+.calendar-cell {
+  @apply relative p-2 min-h-[100px] text-sm;
+} 

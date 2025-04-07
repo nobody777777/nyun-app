@@ -1,22 +1,22 @@
 {
-    "name": "Nama Aplikasi Anda",
-    "short_name": "Nama Singkat",
-    "description": "Deskripsi aplikasi Anda",
+    "name": "ROTI BAKAR BY KYZ",
+    "short_name": "BY KYZ",
+    "description": "Sistem Pencatatan Penjualan & Kalkulator Bahan",
     "start_url": "/",
-    "version": "1.0.1",
+    "version": "1.1.0",
     "display": "standalone",
     "orientation": "portrait",
-    "background_color": "#000000",
-    "theme_color": "#000000",
+    "background_color": "#FFFFFF",
+    "theme_color": "#FFFFFF",
     "icons": [
       {
-        "src": "/icons/icon-192x192.png",
+        "src": "/icon-192x192.png",
         "sizes": "192x192",
         "type": "image/png",
         "purpose": "any maskable"
       },
       {
-        "src": "/icons/icon-512x512.png",
+        "src": "/icon-512x512.png",
         "sizes": "512x512",
         "type": "image/png",
         "purpose": "any maskable"

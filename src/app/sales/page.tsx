@@ -318,9 +318,62 @@ export default function SalesPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-6">
       <div className="container mx-auto px-4">
-        <h1 className="text-3xl font-bold text-gray-800 mb-8">
-          Pencatatan Penjualan
-        </h1>
+        <div className="flex flex-col gap-4 mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
+            Pencatatan Penjualan
+          </h1>
+          
+          {/* Navigasi Bulan */}
+          <div className="bg-white rounded-lg shadow-sm p-3">
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <button
+                onClick={() => {
+                  const newDate = new Date(currentDate)
+                  newDate.setMonth(currentDate.getMonth() - 1)
+                  setCurrentDate(newDate)
+                }}
+                className="px-2 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+              >
+                ←
+              </button>
+              <select
+                value={`${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`}
+                onChange={(e) => {
+                  const [year, month] = e.target.value.split('-').map(Number)
+                  const newDate = new Date(year, month - 1)
+                  setCurrentDate(newDate)
+                }}
+                className="px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                {Array.from({ length: 12 }, (_, i) => {
+                  const date = new Date()
+                  date.setMonth(date.getMonth() - i)
+                  return {
+                    value: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`,
+                    label: new Intl.DateTimeFormat('id-ID', { 
+                      year: 'numeric',
+                      month: 'long'
+                    }).format(date)
+                  }
+                }).map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={() => {
+                  const today = new Date()
+                  const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
+                  setCurrentDate(firstDayOfMonth)
+                }}
+                className="px-2 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors whitespace-nowrap"
+              >
+                Bulan Ini
+              </button>
+            </div>
+          </div>
+        </div>
 
         <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-md p-6 space-y-6">
           <div className="flex justify-between items-center">

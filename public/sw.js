@@ -1,5 +1,6 @@
 // Nama cache
-const CACHE_NAME = 'roti-bakar-v1.0.2';
+const CACHE_NAME = 'roti-barok-v1.1.0';
+const APP_VERSION = '1.1.0';
 
 // File yang akan di-cache
 const urlsToCache = [
@@ -10,7 +11,8 @@ const urlsToCache = [
   '/settings',
   '/manifest.json',
   '/icon-192x192.png',
-  '/icon-512x512.png'
+  '/icon-512x512.png',
+  '/favicon.ico'
 ];
 
 // Tambahkan daftar URL yang berisi data dinamis
@@ -28,23 +30,38 @@ self.addEventListener('install', (event) => {
         return cache.addAll(urlsToCache);
       })
   );
+  // Force aktivasi service worker baru
   self.skipWaiting();
 });
 
 // Aktivasi service worker
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
+    Promise.all([
+      // Update cache
+      caches.keys().then((cacheNames) => {
+        return Promise.all(
+          cacheNames.map((cacheName) => {
+            if (cacheName !== CACHE_NAME) {
+              console.log('Menghapus cache lama:', cacheName);
+              return caches.delete(cacheName);
+            }
+          })
+        );
+      }),
+      // Ambil kontrol langsung
+      self.clients.claim(),
+      // Kirim pesan ke client bahwa ada update
+      self.clients.matchAll().then((clients) => {
+        clients.forEach(client => {
+          client.postMessage({
+            type: 'APP_UPDATE',
+            version: APP_VERSION
+          });
+        });
+      })
+    ])
   );
-  return self.clients.claim();
 });
 
 // Strategi cache: Network first untuk data dinamis, Cache first untuk aset statis

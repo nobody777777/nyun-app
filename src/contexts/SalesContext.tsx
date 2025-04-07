@@ -19,17 +19,37 @@ type SalesContextType = {
   setSalesData: (data: SalesRecord[]) => void // Tambahkan setter untuk data penjualan
 }
 
-const SalesContext = createContext<SalesContextType | undefined>(undefined)
+const getCurrentMonth = () => {
+  try {
+    const now = new Date()
+    return { month: now.getMonth() + 1, year: now.getFullYear() }
+  } catch (error) {
+    console.error('Error getting current month:', error)
+    return { month: 1, year: 2024 }
+  }
+}
+
+// Buat nilai default untuk context
+const defaultContextValue: SalesContextType = {
+  refreshData: async () => {},
+  currentMonth: getCurrentMonth(),
+  setCurrentMonth: () => {},
+  isLoading: false,
+  salesData: [],
+  setSalesData: () => {}
+}
+
+// Inisialisasi context dengan nilai default
+const SalesContext = createContext<SalesContextType>(defaultContextValue)
 
 export function SalesProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(false)
   const [salesData, setSalesData] = useState<SalesRecord[]>([])
-  const [currentMonth, setCurrentMonth] = useState(() => {
-    const now = new Date()
-    return { month: now.getMonth() + 1, year: now.getFullYear() }
-  })
+  const [currentMonth, setCurrentMonth] = useState(getCurrentMonth)
 
   const refreshData = async () => {
+    if (!currentMonth) return
+
     try {
       setIsLoading(true)
       
@@ -58,7 +78,7 @@ export function SalesProvider({ children }: { children: ReactNode }) {
       
     } catch (error) {
       console.error('Error refreshing sales data:', error)
-      // Anda bisa menambahkan penanganan error di sini
+      setSalesData([])
     } finally {
       setIsLoading(false)
     }
@@ -66,18 +86,35 @@ export function SalesProvider({ children }: { children: ReactNode }) {
 
   // Refresh data setiap kali bulan berubah
   useEffect(() => {
-    refreshData()
+    let mounted = true
+
+    const loadData = async () => {
+      if (!mounted) return
+      try {
+        await refreshData()
+      } catch (error) {
+        console.error('Error in useEffect:', error)
+      }
+    }
+
+    loadData()
+
+    return () => {
+      mounted = false
+    }
   }, [currentMonth.month, currentMonth.year])
 
+  const value = {
+    refreshData,
+    currentMonth,
+    setCurrentMonth,
+    isLoading,
+    salesData,
+    setSalesData
+  }
+
   return (
-    <SalesContext.Provider value={{ 
-      refreshData, 
-      currentMonth, 
-      setCurrentMonth,
-      isLoading,
-      salesData,
-      setSalesData
-    }}>
+    <SalesContext.Provider value={value}>
       {children}
     </SalesContext.Provider>
   )
@@ -85,7 +122,7 @@ export function SalesProvider({ children }: { children: ReactNode }) {
 
 export function useSales() {
   const context = useContext(SalesContext)
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useSales must be used within a SalesProvider')
   }
   return context

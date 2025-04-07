@@ -90,21 +90,21 @@ export default function HomePage() {
   }
 
   return (
-    <div className="p-2 sm:p-4 md:p-6">
+    <div className="p-0 sm:p-2 md:p-4">
       <div className="max-w-7xl mx-auto">
+        {/* Header - Dipindah ke luar grid untuk memastikan selalu di atas */}
+        <div className="bg-white rounded-xl shadow-md p-3 sm:p-4 md:p-6 welcome-title mb-3 sm:mb-4 md:mb-6">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-800 mb-1 sm:mb-2">
+            Selamat Datang di Sistem Pencatatan
+          </h1>
+          <p className="text-sm sm:text-base text-gray-600">
+            Sistem Pencatatan Penjualan & Kalkulator Bahan
+          </p>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
           {/* Konten Utama */}
           <div className="lg:col-span-2 space-y-3 sm:space-y-4 md:space-y-6 order-2 lg:order-1">
-            {/* Header */}
-            <div className="bg-white rounded-xl shadow-md p-3 sm:p-4 md:p-6">
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-800 mb-1 sm:mb-2">
-                Selamat Datang di Sistem Pencatatan
-              </h1>
-              <p className="text-sm sm:text-base text-gray-600">
-                Sistem Pencatatan Penjualan & Kalkulator Bahan
-              </p>
-            </div>
-
             {/* Statistik */}
             <Suspense fallback={<div className="animate-pulse h-48 sm:h-64 bg-gray-200 rounded-xl" />}>
               <div className="bg-white rounded-xl shadow-md p-3 sm:p-4 md:p-6">

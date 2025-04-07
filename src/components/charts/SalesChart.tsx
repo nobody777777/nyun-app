@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { createClient } from '@supabase/supabase-js'
-import { Line } from 'react-chartjs-2'
+import dynamic from 'next/dynamic'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -17,17 +17,25 @@ import '@/styles/chart.css'
 import { useSales } from '@/contexts/SalesContext'
 import { supabase } from '@/lib/supabase'
 
-// Registrasi komponen Chart.js yang diperlukan
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
+// Dynamic import untuk Line component
+const Line = dynamic(
+  () => import('react-chartjs-2').then(mod => mod.Line),
+  { ssr: false }
 )
+
+// Registrasi komponen Chart.js yang diperlukan
+if (typeof window !== 'undefined') {
+  ChartJS.register(
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    LineElement,
+    Title,
+    Tooltip,
+    Legend,
+    Filler
+  )
+}
 
 const supabaseClient = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -58,6 +66,11 @@ export default function SalesChart() {
   const chartContainerRef = useRef<HTMLDivElement>(null)
   const [activeTooltip, setActiveTooltip] = useState(false)
   const [tooltipVisible, setTooltipVisible] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   useEffect(() => {
     fetchChartData()
@@ -305,51 +318,141 @@ export default function SalesChart() {
     if (!chartContainerRef.current) return
     
     if (!isFullscreen) {
+      // Lock orientasi ke landscape untuk mobile
+      if (window.screen && window.screen.orientation) {
+        try {
+          // Lock ke landscape
+          window.screen.orientation.lock('landscape')
+            .catch(err => console.warn('Tidak dapat mengunci orientasi:', err))
+        } catch (err) {
+          console.warn('Browser tidak mendukung screen orientation lock:', err)
+        }
+      }
+
+      // Masuk mode fullscreen
       if (chartContainerRef.current.requestFullscreen) {
         chartContainerRef.current.requestFullscreen()
-          .then(() => setIsFullscreen(true))
+          .then(() => {
+            setIsFullscreen(true)
+            // Sesuaikan ukuran chart setelah fullscreen
+            if (chartRef.current?.chart) {
+              setTimeout(() => {
+                chartRef.current.chart.resize()
+                chartRef.current.chart.update('none')
+              }, 100)
+            }
+          })
           .catch(err => console.error('Error saat masuk mode fullscreen:', err))
       } else if ((chartContainerRef.current as any).webkitRequestFullscreen) {
         (chartContainerRef.current as any).webkitRequestFullscreen()
         setIsFullscreen(true)
-      } else if ((chartContainerRef.current as any).msRequestFullscreen) {
-        (chartContainerRef.current as any).msRequestFullscreen()
-        setIsFullscreen(true)
+        // Sesuaikan ukuran chart setelah fullscreen
+        if (chartRef.current?.chart) {
+          setTimeout(() => {
+            chartRef.current.chart.resize()
+            chartRef.current.chart.update('none')
+          }, 100)
+        }
       }
     } else {
+      // Keluar dari mode fullscreen
       if (document.exitFullscreen) {
         document.exitFullscreen()
-          .then(() => setIsFullscreen(false))
+          .then(() => {
+            setIsFullscreen(false)
+            // Unlock orientasi
+            if (window.screen && window.screen.orientation) {
+              try {
+                window.screen.orientation.unlock()
+              } catch (err) {
+                console.warn('Tidak dapat unlock orientasi:', err)
+              }
+            }
+            // Sesuaikan ukuran chart setelah keluar fullscreen
+            if (chartRef.current?.chart) {
+              setTimeout(() => {
+                chartRef.current.chart.resize()
+                chartRef.current.chart.update('none')
+              }, 100)
+            }
+          })
           .catch(err => console.error('Error saat keluar mode fullscreen:', err))
       } else if ((document as any).webkitExitFullscreen) {
         (document as any).webkitExitFullscreen()
         setIsFullscreen(false)
-      } else if ((document as any).msExitFullscreen) {
-        (document as any).msExitFullscreen()
-        setIsFullscreen(false)
+        // Unlock orientasi
+        if (window.screen && window.screen.orientation) {
+          try {
+            window.screen.orientation.unlock()
+          } catch (err) {
+            console.warn('Tidak dapat unlock orientasi:', err)
+          }
+        }
+        // Sesuaikan ukuran chart setelah keluar fullscreen
+        if (chartRef.current?.chart) {
+          setTimeout(() => {
+            chartRef.current.chart.resize()
+            chartRef.current.chart.update('none')
+          }, 100)
+        }
       }
     }
   }, [isFullscreen])
   
-  // Deteksi perubahan fullscreen dari browser
+  // Tambahkan useEffect untuk menangani perubahan orientasi
   useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement)
+    const handleOrientationChange = () => {
+      if (chartRef.current?.chart) {
+        // Berikan waktu untuk layout selesai berubah
+        setTimeout(() => {
+          chartRef.current.chart.resize()
+          chartRef.current.chart.update('none')
+        }, 100)
+      }
     }
-    
-    document.addEventListener('fullscreenchange', handleFullscreenChange)
-    document.addEventListener('webkitfullscreenchange', handleFullscreenChange)
-    document.addEventListener('mozfullscreenchange', handleFullscreenChange)
-    document.addEventListener('MSFullscreenChange', handleFullscreenChange)
+
+    window.addEventListener('orientationchange', handleOrientationChange)
     
     return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange)
-      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange)
-      document.removeEventListener('mozfullscreenchange', handleFullscreenChange)
-      document.removeEventListener('MSFullscreenChange', handleFullscreenChange)
+      window.removeEventListener('orientationchange', handleOrientationChange)
+      // Pastikan unlock orientasi saat komponen unmount
+      if (window.screen && window.screen.orientation) {
+        try {
+          window.screen.orientation.unlock()
+        } catch (err) {
+          console.warn('Tidak dapat unlock orientasi saat unmount:', err)
+        }
+      }
     }
   }, [])
-  
+
+  // Update CSS untuk fullscreen mode
+  useEffect(() => {
+    if (isFullscreen) {
+      const updateFullscreenStyle = () => {
+        if (chartRef.current?.chart) {
+          // Sesuaikan opsi chart untuk mode fullscreen
+          chartRef.current.chart.options.maintainAspectRatio = false
+          chartRef.current.chart.options.layout.padding = {
+            left: 20,
+            right: 30,
+            top: 30,
+            bottom: 20
+          }
+          chartRef.current.chart.resize()
+          chartRef.current.chart.update('none')
+        }
+      }
+
+      updateFullscreenStyle()
+      window.addEventListener('resize', updateFullscreenStyle)
+      
+      return () => {
+        window.removeEventListener('resize', updateFullscreenStyle)
+      }
+    }
+  }, [isFullscreen])
+
   // Tambahkan konfigurasi khusus untuk mobile
   useEffect(() => {
     const isMobile = window.innerWidth < 768
@@ -410,6 +513,14 @@ export default function SalesChart() {
       document.removeEventListener('click', handleClickOutside);
     };
   }, [activeTooltip]);
+
+  if (!isMounted) {
+    return (
+      <div className="chart-loading">
+        <div className="loading-spinner"></div>
+      </div>
+    )
+  }
 
   if (loading) {
     return (
@@ -564,192 +675,146 @@ export default function SalesChart() {
   const options = {
     responsive: true,
     maintainAspectRatio: false,
-    devicePixelRatio: 2, // Meningkatkan ketajaman pada layar retina
+    devicePixelRatio: window?.devicePixelRatio || 2,
     interaction: {
-      mode: 'index' as const,
+      mode: 'nearest' as const,
+      axis: 'x',
       intersect: false,
     },
     plugins: {
       legend: {
         position: 'top' as const,
-        align: 'end' as const,
+        align: 'start' as const,
         labels: {
-          generateLabels: (chart: any) => {
-            const originalLabels = ChartJS.defaults.plugins.legend.labels.generateLabels(chart);
-            return originalLabels.map(label => ({
-              ...label,
-              onClick: () => {
-                setTooltipVisible(false);
-                if (chartRef.current?.chart) {
-                  chartRef.current.chart.update();
-                }
-              }
-            }));
+          boxWidth: window?.innerWidth < 768 ? 10 : 12,
+          padding: window?.innerWidth < 768 ? 10 : 20,
+          font: {
+            size: window?.innerWidth < 768 ? 11 : 12
           },
           usePointStyle: true,
-          padding: 20,
-          color: '#666',
-          font: {
-            size: window.innerWidth < 768 ? 10 : 12
-          }
+          filter: (item) => true
         },
-        display: true // Selalu tampilkan legend
-      },
-      title: {
-        display: false,
-        text: 'Grafik Penjualan',
-        font: {
-          size: 16,
-          weight: 'bold' as const
-        } as any,
+        margin: {
+          bottom: window?.innerWidth < 768 ? 20 : 30
+        }
       },
       tooltip: {
-        enabled: tooltipVisible,
+        enabled: true,
         mode: 'index',
         intersect: false,
-        events: ['mousemove', 'touchstart', 'touchmove'],
-        position: 'nearest',
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-        titleColor: '#333',
-        bodyColor: '#666',
-        borderColor: '#ddd',
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        titleColor: '#1f2937',
+        bodyColor: '#4b5563',
+        borderColor: '#e5e7eb',
         borderWidth: 1,
-        padding: 10,
-        displayColors: true,
-        titleFont: {
-          size: window.innerWidth < 768 ? 12 : 14
-        },
+        padding: window?.innerWidth < 768 ? 10 : 12,
         bodyFont: {
-          size: window.innerWidth < 768 ? 11 : 13
+          size: window?.innerWidth < 768 ? 11 : 12
         },
-        external: function(context: any) {
-          setActiveTooltip(context.tooltip.opacity !== 0);
+        titleFont: {
+          size: window?.innerWidth < 768 ? 12 : 13
         },
+        displayColors: true,
         callbacks: {
-          label: function(context: any) {
+          label: function(context) {
             let label = context.dataset.label || '';
             if (label) {
               label += ': ';
-              if (label.includes('Perubahan')) {
-                const value = context.parsed.y;
-                const sign = value >= 0 ? '+' : '';
-                label += sign + value.toFixed(2) + '%';
+              if (label.includes('Roti')) {
+                if (label.includes('Perubahan')) {
+                  label += context.parsed.y.toFixed(1) + '%';
+                } else {
+                  label += context.parsed.y + ' biji';
+                }
               } else if (label.includes('Omset')) {
-                label += 'Rp ' + (context.parsed.y * 1000).toLocaleString('id-ID');
-              } else {
-                label += context.parsed.y + ' biji';
+                if (label.includes('Perubahan')) {
+                  label += context.parsed.y.toFixed(1) + '%';
+                } else {
+                  label += 'Rp ' + (context.parsed.y * 1000).toLocaleString('id-ID');
+                }
               }
             }
             return label;
-          },
-          title: function(context: any) {
-            return context[0].label;
-          },
-          afterBody: function(context: any) {
-            const dayData = chartData.dailyData[context[0].dataIndex];
-            const dayIndex = context[0].dataIndex;
-            
-            let result = [
-              '',
-              `Roti terjual: ${dayData.total_bread.toLocaleString('id-ID')} biji`,
-              `Omset: Rp ${dayData.total_sales.toLocaleString('id-ID')}`
-            ];
-            
-            if (displayMode === 'cumulative') {
-              result.push(
-                '',
-                `Kumulatif roti: ${dayData.cumulative_bread.toLocaleString('id-ID')} biji`,
-                `Kumulatif omset: Rp ${dayData.cumulative_sales.toLocaleString('id-ID')}`
-              );
-            }
-            
-            if (dayIndex > 0) {
-              const breadChange = breadPercentageChanges[dayIndex];
-              const salesChange = salesPercentageChanges[dayIndex];
-              const breadSign = breadChange >= 0 ? '▲' : '▼';
-              const salesSign = salesChange >= 0 ? '▲' : '▼';
-              
-              result.push(
-                '',
-                `Perubahan Roti: ${breadSign} ${Math.abs(breadChange).toFixed(2)}%`,
-                `Perubahan Omset: ${salesSign} ${Math.abs(salesChange).toFixed(2)}%`
-              );
-            }
-            
-            return result;
           }
         }
       }
     },
     scales: {
       y: {
-        beginAtZero: displayMode === 'daily',
-        title: {
-          display: true,
-          text: displayMode === 'daily' ? 'Jumlah / Nilai Harian' : 'Jumlah / Nilai Kumulatif'
+        beginAtZero: true,
+        grid: {
+          color: 'rgba(0, 0, 0, 0.05)',
+          drawBorder: false
+        },
+        border: {
+          display: false
         },
         ticks: {
           font: {
-            size: window.innerWidth < 768 ? 10 : 12
+            size: window?.innerWidth < 768 ? 10 : 12
           },
-          color: 'rgb(55, 65, 81)',
-          padding: window.innerWidth < 768 ? 5 : 8
-        },
-        grid: {
-          color: 'rgba(0, 0, 0, 0.05)'
-        },
-        // Aktifkan adaptasi skala otomatis untuk perubahan kecil
-        adapters: {
-          autoSkip: false
+          padding: window?.innerWidth < 768 ? 5 : 8,
+          maxTicksLimit: window?.innerWidth < 768 ? 6 : 8,
+          color: '#6b7280'
         }
       },
       percentage: {
         position: 'right' as const,
-        beginAtZero: false,
-        title: {
-          display: true,
-          text: 'Perubahan (%)'
+        beginAtZero: true,
+        grid: {
+          display: false
+        },
+        border: {
+          display: false
         },
         ticks: {
           font: {
-            size: window.innerWidth < 768 ? 10 : 12
+            size: window?.innerWidth < 768 ? 10 : 12
+          },
+          padding: window?.innerWidth < 768 ? 5 : 8,
+          maxTicksLimit: window?.innerWidth < 768 ? 6 : 8,
+          color: '#6b7280',
+          callback: function(value) {
+            return value + '%';
           }
-        },
-        grid: {
-          drawOnChartArea: false
         }
       },
       x: {
+        grid: {
+          display: false
+        },
+        border: {
+          display: false
+        },
         ticks: {
           font: {
-            weight: 'normal',
-            size: window.innerWidth < 768 ? 9 : (timeRange === '60d' ? 9 : (timeRange === '30d' ? 10 : 11))
+            size: window?.innerWidth < 768 ? 10 : 11
           },
-          color: 'rgb(55, 65, 81)',
-          maxRotation: window.innerWidth < 768 ? 45 : 0,
-          minRotation: window.innerWidth < 768 ? 45 : 0,
-          autoSkip: true,
-          maxTicksLimit: window.innerWidth < 768 ? 7 : 15
-        },
-        grid: {
-          color: 'rgba(0, 0, 0, 0.05)'
-        },
-        offset: false,
-        alignToPixels: true,
-        bounds: 'ticks'
+          maxRotation: window?.innerWidth < 768 ? 45 : 0,
+          minRotation: window?.innerWidth < 768 ? 45 : 0,
+          maxTicksLimit: window?.innerWidth < 768 ? 8 : 10,
+          color: '#6b7280',
+          padding: window?.innerWidth < 768 ? 5 : 8
+        }
       }
     },
-    animation: {
-      duration: 500 // Kurangi durasi animasi untuk performa lebih baik di mobile
+    layout: {
+      padding: {
+        left: window?.innerWidth < 768 ? 8 : 10,
+        right: window?.innerWidth < 768 ? 15 : 20,
+        top: window?.innerWidth < 768 ? 15 : 20,
+        bottom: window?.innerWidth < 768 ? 8 : 10
+      }
     },
     elements: {
       point: {
-        radius: window.innerWidth < 768 ? 2 : 3,
-        hoverRadius: window.innerWidth < 768 ? 4 : 6
+        radius: window?.innerWidth < 768 ? 3 : 4,
+        hoverRadius: window?.innerWidth < 768 ? 5 : 6,
+        hitRadius: window?.innerWidth < 768 ? 10 : 12
       },
       line: {
         tension: 0.3,
-        borderWidth: window.innerWidth < 768 ? 2 : 3
+        borderWidth: window?.innerWidth < 768 ? 2 : 2.5
       }
     }
   } as any;
@@ -806,245 +871,136 @@ export default function SalesChart() {
   };
 
   return (
-    <div className="chart-container bg-white rounded-xl shadow-md p-6 dark:bg-gray-800">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-        <div>
-          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200">Statistik Penjualan</h2>
-          <div className="flex items-center gap-2">
-            <button 
-              onClick={() => navigateMonth('prev')}
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-            >
-              ←
-            </button>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              {new Intl.DateTimeFormat('id-ID', { month: 'long', year: 'numeric' }).format(
-                new Date(currentMonth.year, currentMonth.month - 1, 1)
-              )}
-            </p>
-            <button 
-              onClick={() => navigateMonth('next')}
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-            >
-              →
-            </button>
-            <button
-              onClick={forceRefresh}
-              className="ml-2 text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-              title="Refresh Data"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-            </button>
-          </div>
-          
-          {dataIncomplete && (
-            <div className="mt-2 text-xs text-amber-600 dark:text-amber-400 flex items-center">
-              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-              Data tidak lengkap, analisis mungkin tidak akurat
-            </div>
-          )}
-        </div>
-
-        <div className="flex rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
-          <button
-            onClick={() => setDisplayMode('daily')}
-            className={`px-3 py-1 text-xs font-medium ${
-              displayMode === 'daily'
-                ? 'bg-blue-500 text-white'
-                : 'bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
-            }`}
-          >
-            Harian
-          </button>
-          <button
-            onClick={() => setDisplayMode('cumulative')}
-            className={`px-3 py-1 text-xs font-medium ${
-              displayMode === 'cumulative'
-                ? 'bg-blue-500 text-white'
-                : 'bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
-            }`}
-          >
-            Kumulatif
-          </button>
-        </div>
-
-        <div className="flex gap-2">
-          <button
-            onClick={() => toggleDataset('roti')}
-            className={`chart-toggle-button ${
-              activeDataset.includes('roti') 
-                ? 'active-roti' 
-                : 'inactive'
-            }`}
-          >
-            <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-            Roti
-          </button>
-          <button
-            onClick={() => toggleDataset('omset')}
-            className={`chart-toggle-button ${
-              activeDataset.includes('omset') 
-                ? 'active-omset' 
-                : 'inactive'
-            }`}
-          >
-            <div className="w-3 h-3 rounded-full bg-green-500"></div>
-            Omset
-          </button>
-        </div>
-      </div>
-
-      {loading ? (
-        <div className="chart-loading flex justify-center items-center py-20">
-          <div className="loading-spinner"></div>
-        </div>
-      ) : chartData.dailyData.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <svg className="w-16 h-16 text-gray-300 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-          </svg>
-          <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">Tidak Ada Data</h3>
-          <p className="text-gray-500 dark:text-gray-400 max-w-md">
-            Tidak ada data penjualan untuk periode {timeRangeLabels[timeRange]}. Silakan pilih rentang waktu yang berbeda.
-          </p>
-        </div>
-      ) : (
-        <div className="relative chart-wrapper" ref={chartContainerRef} onClick={handleChartClick}>
-          <div className="absolute top-2 right-2 z-10 flex gap-2">
+    <div className="chart-container">
+      <div className="chart-header">
+        <div className="chart-title-section">
+          <h2 className="chart-title">Statistik Penjualan</h2>
+          <div className="chart-actions">
             <button
               onClick={toggleFullscreen}
-              className="p-2 bg-gray-100 rounded-full hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600"
-              title={isFullscreen ? "Keluar Fullscreen" : "Tampilan Fullscreen"}
+              className="chart-button secondary"
+              title={isFullscreen ? "Keluar Fullscreen" : "Mode Fullscreen"}
             >
               {isFullscreen ? (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5M15 15l5.25 5.25" />
                 </svg>
               ) : (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
                 </svg>
               )}
             </button>
             <button
-              onClick={() => {
-                // Rotasi layar
-                if (screen.orientation) {
-                  if (screen.orientation.type.includes('portrait')) {
-                    (screen.orientation as any).lock('landscape')
-                      .catch(err => console.error('Error saat rotasi layar:', err))
-                  } else {
-                    (screen.orientation as any).lock('portrait')
-                      .catch(err => console.error('Error saat rotasi layar:', err))
-                  }
-                }
-              }}
-              className="p-2 bg-gray-100 rounded-full hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600"
-              title="Rotasi Layar"
+              onClick={forceRefresh}
+              className="chart-button secondary"
+              title="Refresh Data"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
             </button>
           </div>
-          <div style={{ height: isFullscreen ? '100vh' : (window.innerWidth < 768 ? '300px' : '400px'), width: '100%' }}>
-            <Line ref={chartRef} data={chartDataForChartJS} options={options} />
-          </div>
-          {tooltipVisible && (
-            <div 
-              className="absolute top-0 right-0 text-xs text-gray-500 cursor-pointer p-2"
-              onClick={(e) => {
-                e.stopPropagation();
-                setTooltipVisible(false);
-                if (chartRef.current?.chart) {
-                  chartRef.current.chart.update();
-                }
-              }}
+        </div>
+
+        <div className="chart-controls">
+          <div className="control-group">
+            <button 
+              onClick={() => navigateMonth('prev')}
+              className="chart-button secondary"
             >
-              Tap untuk sembunyikan detail
-            </div>
-          )}
+              ←
+            </button>
+            <span className="text-gray-600">
+              {new Intl.DateTimeFormat('id-ID', { 
+                month: 'long', 
+                year: 'numeric' 
+              }).format(new Date(currentMonth.year, currentMonth.month - 1, 1))}
+            </span>
+            <button 
+              onClick={() => navigateMonth('next')}
+              className="chart-button secondary"
+            >
+              →
+            </button>
+          </div>
+
+          <div className="control-group">
+            <button
+              onClick={() => setDisplayMode('daily')}
+              className={`chart-button ${displayMode === 'daily' ? 'primary' : 'secondary'}`}
+            >
+              Harian
+            </button>
+            <button
+              onClick={() => setDisplayMode('cumulative')}
+              className={`chart-button ${displayMode === 'cumulative' ? 'primary' : 'secondary'}`}
+            >
+              Kumulatif
+            </button>
+          </div>
+
+          <div className="control-group">
+            <button
+              onClick={() => toggleDataset('roti')}
+              className={`chart-button ${activeDataset.includes('roti') ? 'primary' : 'secondary'}`}
+            >
+              Data Roti
+            </button>
+            <button
+              onClick={() => toggleDataset('omset')}
+              className={`chart-button ${activeDataset.includes('omset') ? 'primary' : 'secondary'}`}
+            >
+              Data Omset
+            </button>
+          </div>
+        </div>
+
+        {dataIncomplete && (
+          <div className="chart-warning">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <span>Data tidak lengkap, analisis mungkin tidak akurat</span>
+          </div>
+        )}
+      </div>
+
+      <div className={`chart-wrapper ${isFullscreen ? 'fullscreen-chart' : ''}`}>
+        <div 
+          className="chart-empty-area"
+          onClick={() => {
+            if (chartRef.current?.chart) {
+              // Sembunyikan tooltip
+              chartRef.current.chart.tooltip.setActiveElements([], { x: 0, y: 0 });
+              chartRef.current.chart.update();
+              setActiveTooltip(false);
+            }
+          }}
+        />
+        <Line ref={chartRef} data={chartDataForChartJS} options={options} />
+      </div>
+
+      {!isFullscreen && (
+        <div className="stats-grid">
+          <div className="stats-card">
+            <div className="title">Total Roti</div>
+            <div className="value">{chartData.stats?.totalBread.toLocaleString('id-ID')} biji</div>
+          </div>
+          <div className="stats-card">
+            <div className="title">Total Omset</div>
+            <div className="value">Rp {chartData.stats?.totalSales.toLocaleString('id-ID')}</div>
+          </div>
+          <div className="stats-card">
+            <div className="title">Rata-rata/Hari</div>
+            <div className="value">{chartData.stats?.avgBread.toLocaleString('id-ID')} biji</div>
+          </div>
+          <div className="stats-card">
+            <div className="title">Rata-rata Omset</div>
+            <div className="value">Rp {chartData.stats?.avgSales.toLocaleString('id-ID')}</div>
+          </div>
         </div>
       )}
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-        <div 
-          className={`summary-card roti ${
-            activeDataset.includes('roti') ? 'opacity-100' : 'opacity-50'
-          }`}
-          onClick={() => toggleDataset('roti')}
-        >
-          <div className="text-sm text-gray-600 dark:text-gray-400">Total Roti Terjual</div>
-          <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-            {chartData.stats?.totalBread.toLocaleString('id-ID')} biji
-          </div>
-          {chartData.dailyData.length > 1 && (
-            <div className={`text-xs mt-1 ${
-              breadPercentageChanges[breadPercentageChanges.length - 1] >= 0 
-                ? 'text-green-600 dark:text-green-400' 
-                : 'text-red-600 dark:text-red-400'
-            }`}>
-              {breadPercentageChanges[breadPercentageChanges.length - 1] >= 0 ? '▲' : '▼'} 
-              {Math.abs(breadPercentageChanges[breadPercentageChanges.length - 1]).toFixed(2)}% 
-              dari hari sebelumnya
-            </div>
-          )}
-        </div>
-        <div 
-          className={`summary-card omset ${
-            activeDataset.includes('omset') ? 'opacity-100' : 'opacity-50'
-          }`}
-          onClick={() => toggleDataset('omset')}
-        >
-          <div className="text-sm text-gray-600 dark:text-gray-400">Total Omset</div>
-          <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-            Rp {chartData.stats?.totalSales.toLocaleString('id-ID')}
-          </div>
-          {chartData.dailyData.length > 1 && (
-            <div className={`text-xs mt-1 ${
-              salesPercentageChanges[salesPercentageChanges.length - 1] >= 0 
-                ? 'text-green-600 dark:text-green-400' 
-                : 'text-red-600 dark:text-red-400'
-            }`}>
-              {salesPercentageChanges[salesPercentageChanges.length - 1] >= 0 ? '▲' : '▼'} 
-              {Math.abs(salesPercentageChanges[salesPercentageChanges.length - 1]).toFixed(2)}% 
-              dari hari sebelumnya
-            </div>
-          )}
-        </div>
-        
-        <div className="summary-card">
-          <div className="text-sm text-gray-600 dark:text-gray-400">Rata-rata Roti/Hari</div>
-          <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-            {chartData.stats?.avgBread.toLocaleString('id-ID')} biji
-          </div>
-          <div className={`text-xs mt-1 ${
-            breadTrend >= 0 
-              ? 'text-green-600 dark:text-green-400' 
-              : 'text-red-600 dark:text-red-400'
-          }`}>
-            Tren: {breadTrend >= 0 ? '▲' : '▼'} {Math.abs(breadTrend).toFixed(2)}%
-          </div>
-        </div>
-        
-        <div className="summary-card">
-          <div className="text-sm text-gray-600 dark:text-gray-400">Rata-rata Omset/Hari</div>
-          <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-            Rp {chartData.stats?.avgSales.toLocaleString('id-ID')}
-          </div>
-          <div className={`text-xs mt-1 ${
-            salesTrend >= 0 
-              ? 'text-green-600 dark:text-green-400' 
-              : 'text-red-600 dark:text-red-400'
-          }`}>
-            Tren: {salesTrend >= 0 ? '▲' : '▼'} {Math.abs(salesTrend).toFixed(2)}%
-          </div>
-        </div>
-      </div>
     </div>
   )
 }

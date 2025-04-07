@@ -37,10 +37,11 @@ export async function addSaleItems(items: Omit<SaleItem, 'id' | 'created_at'>[])
 
 export async function getDailySalesTotal(month: number, year: number) {
   const { data, error } = await supabase
-    .from('sales')
-    .select('date, total_amount')
+    .from('daily_sales')
+    .select('date, total_sales')
     .gte('date', `${year}-${month.toString().padStart(2, '0')}-01`)
     .lte('date', `${year}-${month.toString().padStart(2, '0')}-31`)
+    .order('date', { ascending: true })
   
   if (error) throw error
   return data

@@ -16,12 +16,28 @@ export const ingredients = [
       category: 'baku',
       icon: '🧈'
     },
+    {
+      id: '19',
+      name: 'Simas 1/2',
+      price: 13000,
+      unit: '1/2kg',
+      category: 'baku',
+      icon: '🧈'
+    },
     // Kategori Bumbu
     {
       id: '3',
       name: 'Nanas',
       price: 18000,
       unit: 'kg',
+      category: 'bumbu',
+      icon: '🍍'
+    },
+    {
+      id: '20',
+      name: 'Nanas 1/2',
+      price: 9000,
+      unit: '1/2kg',
       category: 'bumbu',
       icon: '🍍'
     },
@@ -34,6 +50,14 @@ export const ingredients = [
       icon: '🍓'
     },
     {
+      id: '21',
+      name: 'Stroberry 1/2',
+      price: 9000,
+      unit: '1/2kg',
+      category: 'bumbu',
+      icon: '🍓'
+    },
+    {
       id: '5',
       name: 'Blueberry',
       price: 17000,
@@ -42,10 +66,26 @@ export const ingredients = [
       icon: '🫐'
     },
     {
+      id: '22',
+      name: 'Blueberry 1/2',
+      price: 9000,
+      unit: '1/2kg',
+      category: 'bumbu',
+      icon: '🫐'
+    },
+    {
       id: '6',
       name: 'Coklat',
       price: 35000,
       unit: 'kg',
+      category: 'bumbu',
+      icon: '🍫'
+    },
+    {
+      id: '23',
+      name: 'Coklat 1/2',
+      price: 18000,
+      unit: '1/2kg',
       category: 'bumbu',
       icon: '🍫'
     },
