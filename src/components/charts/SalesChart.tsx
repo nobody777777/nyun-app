@@ -54,7 +54,7 @@ const _timeRangeLabels: Record<TimeRange, string> = {
 }
 
 export default function SalesChart() {
-  const { currentMonth, setCurrentMonth, isLoading, refreshData, salesData: contextSalesData } = useSales()
+  const { currentMonth, setCurrentMonth, _isLoading, _refreshData, _contextSalesData } = useSales()
   const [loading, setLoading] = useState(true)
   const [chartData, setChartData] = useState<any>({ dailyData: [], stats: null })
   const [activeDataset, setActiveDataset] = useState<string[]>(['roti'])

@@ -39,7 +39,7 @@ export default function HistoryPage() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [showPopup])
 
   useEffect(() => {
     loadRecords()

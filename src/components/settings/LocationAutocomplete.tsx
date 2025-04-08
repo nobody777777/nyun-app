@@ -10,6 +10,7 @@ interface Location {
 }
 
 interface Props {
+  _location?: string;
   onLocationSelect: (location: string) => void;
   initialValue?: string;
 }

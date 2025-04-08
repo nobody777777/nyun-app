@@ -1,5 +1,5 @@
 interface IngredientCardProps {
-  _id: string
+  id: string
   name: string
   price: number
   unit: string
@@ -11,7 +11,7 @@ interface IngredientCardProps {
 }
 
 export default function IngredientCard({
-  _id,
+  id,
   name,
   price,
   unit,
@@ -37,11 +37,12 @@ export default function IngredientCard({
 
   return (
     <div
-      onClick={() => onIncrement(_id)}
+      onClick={() => onIncrement(id)}
       className={`
         bg-white rounded-xl shadow-md p-5 
         cursor-pointer transition-all duration-200
         hover:shadow-lg hover:scale-[1.02] 
+        active:scale-[0.98]
         border-l-4 ${getBorderColor()}
         relative
       `}
@@ -77,7 +78,7 @@ export default function IngredientCard({
               <button
                 onClick={(e) => {
                   e.stopPropagation()
-                  onReset(_id)
+                  onReset(id)
                 }}
                 className="text-red-500 hover:text-red-700 bg-red-50 p-2 rounded-full transition-colors"
               >

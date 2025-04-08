@@ -176,7 +176,7 @@ export default function SalesPage() {
       console.error('Error deleting sale:', error)
       showPopup('Error', 'Gagal menghapus data penjualan', 'error')
     }
-  }, [showPopup])
+  }, [showPopup, setReloadTrigger])
 
   const loadSalesData = useCallback(async () => {
     try {
@@ -272,8 +272,13 @@ export default function SalesPage() {
     }).format(amount)
   }
 
-  const formatDate = (_timestamp: string) => {
-    // ... rest of the code ...
+  const _formatDate = (timestamp: string) => {
+    return new Date(timestamp).toLocaleDateString('id-ID', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
   }
 
   return (
