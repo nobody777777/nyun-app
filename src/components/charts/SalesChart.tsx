@@ -54,7 +54,7 @@ const _timeRangeLabels: Record<TimeRange, string> = {
 }
 
 export default function SalesChart() {
-  const { currentMonth, setCurrentMonth, _isLoading, _refreshData, _contextSalesData } = useSales()
+  const { currentMonth, setCurrentMonth, isLoading, refreshData, salesData } = useSales()
   const [loading, setLoading] = useState(true)
   const [chartData, setChartData] = useState<any>({ dailyData: [], stats: null })
   const [activeDataset, setActiveDataset] = useState<string[]>(['roti'])
@@ -321,9 +321,12 @@ export default function SalesChart() {
       // Lock orientasi ke landscape untuk mobile
       if (window.screen && window.screen.orientation) {
         try {
-          // Lock ke landscape menggunakan optional chaining
-          window.screen.orientation?.lock?.('landscape')
-            .catch(err => console.warn('Tidak dapat mengunci orientasi:', err))
+          // Gunakan tipe yang benar untuk screen orientation
+          const orientation = window.screen.orientation as any;
+          if (orientation.lock) {
+            orientation.lock('landscape')
+              .catch(err => console.warn('Tidak dapat mengunci orientasi:', err));
+          }
         } catch (err) {
           console.warn('Browser tidak mendukung screen orientation lock:', err)
         }
