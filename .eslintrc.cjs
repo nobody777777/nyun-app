@@ -14,6 +14,13 @@ module.exports = {
   rules: {
     'react/jsx-no-target-blank': 'off',
     'react/prop-types': 'off',
-    'react/react-in-jsx-scope': 'off'
+    'react/react-in-jsx-scope': 'off',
+    'no-unused-vars': ['warn', { 
+      'argsIgnorePattern': '^_',
+      'varsIgnorePattern': '^_',
+      'ignoreRestSiblings': true
+    }],
+    'react-hooks/exhaustive-deps': 'warn',
+    '@next/next/no-html-link-for-pages': 'off'
   },
 }

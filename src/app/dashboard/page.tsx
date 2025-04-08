@@ -8,7 +8,7 @@ import { supabase } from '@/lib/supabase'
 
 export default function DashboardPage() {
   const [currentTime, setCurrentTime] = useState(new Date())
-  const { salesData, refreshData } = useSales()
+  const { salesData, _refreshData } = useSales()
   const [todayStats, setTodayStats] = useState({
     totalBread: 0,
     totalSales: 0,

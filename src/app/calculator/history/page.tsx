@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { getPurchaseHistory, deletePurchase, deleteAllPurchases } from '../lib/purchaseService'
 import { usePopup } from '@/components/ui/PopupManager'
@@ -24,11 +24,7 @@ export default function HistoryPage() {
   const [loading, setLoading] = useState(true)
   const [viewMode, setViewMode] = useState('list')
 
-  useEffect(() => {
-    loadRecords()
-  }, [])
-
-  const loadRecords = async () => {
+  const loadRecords = useCallback(async () => {
     try {
       setLoading(true)
       const data = await getPurchaseHistory()
@@ -43,7 +39,11 @@ export default function HistoryPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    loadRecords()
+  }, [loadRecords])
 
   const handleDelete = async (id: string) => {
     showPopup(

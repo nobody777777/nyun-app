@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Order } from '@/lib/types'
 
@@ -27,7 +27,7 @@ export default function OrderHistoryPage() {
   }, [startDate, endDate])
 
   // Fungsi untuk mengambil riwayat pesanan
-  const fetchOrderHistory = async () => {
+  const fetchOrderHistory = useCallback(async () => {
     try {
       setLoading(true)
       
@@ -62,7 +62,11 @@ export default function OrderHistoryPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [startDate, endDate])
+
+  useEffect(() => {
+    fetchOrderHistory()
+  }, [fetchOrderHistory])
 
   // Format tanggal dan waktu
   const formatDateTime = (dateString: string) => {

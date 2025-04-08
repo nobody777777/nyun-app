@@ -1,4 +1,5 @@
 'use client'
+import React from 'react'
 import { useState } from 'react'
 import { createSale, addSaleItems, updateDailySales } from '@/lib/db-helpers'
 import { useRouter } from 'next/navigation'

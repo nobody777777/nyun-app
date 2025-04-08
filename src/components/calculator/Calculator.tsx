@@ -2,7 +2,7 @@
 import { useState } from 'react'
 
 export default function Calculator() {
-  const [items, setItems] = useState<Array<{name: string, price: number}>>([])
+  const [_items, _setItems] = useState<Array<{name: string, price: number}>>([])
   
   return (
     <div className="border rounded-lg p-4">

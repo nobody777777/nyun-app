@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import ClientLayout from '@/components/ClientLayout'
+import Image from 'next/image'
 
 interface WeatherData {
   temperature: number
@@ -82,10 +83,11 @@ export default function WeatherPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   {/* Info Utama */}
                   <div className="text-center">
-                    <img
+                    <Image
                       src={`https://openweathermap.org/img/wn/${weather.icon}@4x.png`}
                       alt={weather.description}
-                      className="mx-auto w-32 h-32"
+                      width={128}
+                      height={128}
                     />
                     <div className="text-5xl font-bold text-gray-800 mt-4">
                       {weather.temperature}°C

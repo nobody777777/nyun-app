@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import { usePopup } from '@/components/ui/PopupManager'
 import { useSales } from '@/contexts/SalesContext'
@@ -36,7 +36,7 @@ export default function SalesPage() {
   const [loading, setLoading] = useState(true)
   const [editMode, setEditMode] = useState(false)
   const [currentEditId, setCurrentEditId] = useState<string | null>(null)
-  const [reloadTrigger, setReloadTrigger] = useState(0)
+  const [_reloadTrigger, setReloadTrigger] = useState(0)
 
   useEffect(() => {
     setCurrentMonth({
@@ -161,67 +161,24 @@ export default function SalesPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  const handleDelete = async (id: string) => {
-    showPopup(
-      'Konfirmasi Hapus', 
-      <div>
-        <p>Yakin ingin menghapus data penjualan ini?</p>
-        <div className="flex justify-end gap-2 mt-4">
-          <button 
-            onClick={() => closePopup()}
-            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
-          >
-            Batal
-          </button>
-          <button 
-            onClick={async () => {
-              // Tutup popup konfirmasi segera
-              closePopup()
-              
-              try {
-                // Tampilkan loading state
-                showPopup('Memproses', 'Sedang menghapus data...', 'info')
-                
-                const { error } = await supabase
-                  .from('daily_sales')
-                  .delete()
-                  .eq('id', id)
-                
-                if (error) throw error
-                
-                // Tutup popup loading
-                closePopup()
-                
-                // Update state lokal
-                setSalesData(prevData => prevData.filter(sale => sale.id !== id))
-                
-                // Tampilkan pesan sukses sebentar
-                showPopup(
-                  'Sukses', 
-                  'Data penjualan berhasil dihapus!', 
-                  'success',
-                  1000 // Hanya tampilkan 1 detik
-                )
-                
-                // Reload data
-                await loadSalesData()
-                
-              } catch (error) {
-                console.error('Error:', error)
-                showPopup('Error', 'Gagal menghapus data', 'error', 2000)
-              }
-            }}
-            className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
-          >
-            Ya, Hapus
-          </button>
-        </div>
-      </div>, 
-      'warning'
-    )
-  }
+  const handleDelete = useCallback(async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('daily_sales')
+        .delete()
+        .eq('id', id)
 
-  const loadSalesData = async () => {
+      if (error) throw error
+
+      showPopup('Berhasil', 'Data penjualan berhasil dihapus', 'success')
+      setReloadTrigger(prev => prev + 1)
+    } catch (error) {
+      console.error('Error deleting sale:', error)
+      showPopup('Error', 'Gagal menghapus data penjualan', 'error')
+    }
+  }, [showPopup])
+
+  const loadSalesData = useCallback(async () => {
     try {
       setLoading(true)
       
@@ -235,7 +192,7 @@ export default function SalesPage() {
       })
 
       // Tambahkan parameter untuk menghindari cache
-      const timestamp = new Date().getTime()
+      const _timestamp = new Date().getTime()
       
       const { data, error } = await supabase
         .from('daily_sales')
@@ -260,11 +217,11 @@ export default function SalesPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [currentDate, setReloadTrigger, refreshData])
 
   useEffect(() => {
     loadSalesData()
-  }, [currentDate]) // Hanya bergantung pada perubahan currentDate
+  }, [loadSalesData])
 
   const getCalendarDays = (): CalendarDay[] => {
     const year = currentDate.getFullYear()
@@ -313,6 +270,10 @@ export default function SalesPage() {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
     }).format(amount)
+  }
+
+  const formatDate = (_timestamp: string) => {
+    // ... rest of the code ...
   }
 
   return (

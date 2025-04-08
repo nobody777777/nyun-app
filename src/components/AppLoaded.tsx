@@ -1,11 +1,8 @@
 'use client'
 
 import { useEffect } from 'react'
-import { usePopup } from './ui/PopupManager'
 
 export default function AppLoaded() {
-  const { showPopup } = usePopup()
-
   useEffect(() => {
     // Menandai body sebagai loaded setelah aplikasi dimuat
     const handleLoad = () => {

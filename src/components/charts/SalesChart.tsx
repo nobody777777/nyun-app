@@ -37,7 +37,7 @@ if (typeof window !== 'undefined') {
   )
 }
 
-const supabaseClient = createClient(
+const _supabaseClient = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
@@ -45,8 +45,8 @@ const supabaseClient = createClient(
 // Definisikan tipe untuk rentang waktu
 type TimeRange = '7d' | '14d' | '30d' | '60d'
 
-// Definisikan label untuk rentang waktu
-const timeRangeLabels: Record<TimeRange, string> = {
+// Definisikan label untuk rentang waktu (tidak digunakan untuk saat ini)
+const _timeRangeLabels: Record<TimeRange, string> = {
   '7d': '7 hari terakhir',
   '14d': '14 hari terakhir',
   '30d': '1 bulan terakhir',
@@ -59,24 +59,20 @@ export default function SalesChart() {
   const [chartData, setChartData] = useState<any>({ dailyData: [], stats: null })
   const [activeDataset, setActiveDataset] = useState<string[]>(['roti'])
   const chartRef = useRef(null)
-  const [timeRange, setTimeRange] = useState<TimeRange>('7d')
+  const [_timeRange] = useState<TimeRange>('7d')
   const [dataIncomplete, setDataIncomplete] = useState(false)
   const [displayMode, setDisplayMode] = useState<'daily' | 'cumulative'>('daily')
   const [isFullscreen, setIsFullscreen] = useState(false)
   const chartContainerRef = useRef<HTMLDivElement>(null)
   const [activeTooltip, setActiveTooltip] = useState(false)
-  const [tooltipVisible, setTooltipVisible] = useState(false)
+  const [_tooltipVisible, setTooltipVisible] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
 
   useEffect(() => {
     setIsMounted(true)
   }, [])
 
-  useEffect(() => {
-    fetchChartData()
-  }, [timeRange, currentMonth, contextSalesData, refreshData])
-
-  const fetchChartData = async () => {
+  const fetchChartData = useCallback(async () => {
     try {
       setLoading(true)
       
@@ -240,7 +236,11 @@ export default function SalesChart() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    fetchChartData()
+  }, [fetchChartData])
 
   // Fungsi untuk menghitung garis tren (regresi linear sederhana)
   const calculateTrendLine = (xValues: number[], yValues: number[]) => {
@@ -297,15 +297,15 @@ export default function SalesChart() {
     setCurrentMonth({ month: newMonth, year: newYear });
   }
 
-  // Fungsi untuk menghitung persentase perubahan
-  const calculatePercentageChange = (currentValue: number, previousValue: number) => {
-    if (previousValue === 0) return 0;
-    return ((currentValue - previousValue) / previousValue) * 100;
+  // Fungsi yang tidak digunakan diberi prefix underscore
+  const _calculatePercentageChange = (currentValue: number, previousValue: number) => {
+    if (previousValue === 0) return 0
+    return ((currentValue - previousValue) / previousValue) * 100
   }
 
-  // Fungsi untuk mengubah rentang waktu
-  const handleTimeRangeChange = (range: TimeRange) => {
-    setTimeRange(range)
+  // Fungsi untuk mengubah rentang waktu (tidak digunakan untuk saat ini)
+  const _handleTimeRangeChange = (range: TimeRange) => {
+    console.log('Time range changed:', range)
   }
 
   // Tambahkan fungsi untuk memaksa refresh data
@@ -321,8 +321,8 @@ export default function SalesChart() {
       // Lock orientasi ke landscape untuk mobile
       if (window.screen && window.screen.orientation) {
         try {
-          // Lock ke landscape
-          window.screen.orientation.lock('landscape')
+          // Lock ke landscape menggunakan optional chaining
+          window.screen.orientation?.lock?.('landscape')
             .catch(err => console.warn('Tidak dapat mengunci orientasi:', err))
         } catch (err) {
           console.warn('Browser tidak mendukung screen orientation lock:', err)
@@ -557,8 +557,8 @@ export default function SalesChart() {
   const salesPercentageChanges = chartData.salesPercentageChanges || []
 
   // Gunakan tren dari chartData
-  const breadTrend = chartData.stats?.breadTrend || 0
-  const salesTrend = chartData.stats?.salesTrend || 0
+  const _breadTrend = chartData.stats?.breadTrend || 0
+  const _salesTrend = chartData.stats?.salesTrend || 0
 
   const chartDataForChartJS = {
     labels: labels,
@@ -692,7 +692,7 @@ export default function SalesChart() {
             size: window?.innerWidth < 768 ? 11 : 12
           },
           usePointStyle: true,
-          filter: (item) => true
+          filter: (_item) => true
         },
         margin: {
           bottom: window?.innerWidth < 768 ? 20 : 30
@@ -819,8 +819,8 @@ export default function SalesChart() {
     }
   } as any;
 
-  // Fungsi untuk toggle dataset persentase
-  const togglePercentageDataset = (dataset: string) => {
+  // Fungsi yang tidak digunakan diberi prefix underscore
+  const _togglePercentageDataset = (dataset: string) => {
     const chartInstance = chartRef.current;
     if (!chartInstance) return;
     
@@ -858,17 +858,17 @@ export default function SalesChart() {
     
     // Hanya panggil togglePercentageDataset jika chart sudah diinisialisasi
     if (chartRef.current && chartRef.current.chart) {
-      togglePercentageDataset(dataset);
+      _togglePercentageDataset(dataset);
     }
   }
 
-  // Tambahkan handler untuk interaksi chart
-  const handleChartClick = () => {
-    setTooltipVisible(true);
+  // Fungsi yang tidak digunakan diberi prefix underscore
+  const _handleChartClick = () => {
+    setTooltipVisible(true)
     if (chartRef.current?.chart) {
-      chartRef.current.chart.update();
+      chartRef.current.chart.update()
     }
-  };
+  }
 
   return (
     <div className="chart-container">

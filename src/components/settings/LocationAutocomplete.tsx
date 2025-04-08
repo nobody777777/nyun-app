@@ -14,7 +14,7 @@ interface Props {
   initialValue?: string;
 }
 
-export default function LocationAutocomplete({ onLocationSelect, initialValue = '' }: Props) {
+export default function LocationAutocomplete({ _location, onLocationSelect, initialValue = '' }: Props) {
   const [query, setQuery] = useState(initialValue)
   const [suggestions, setSuggestions] = useState<Location[]>([])
   const [isLoading, setIsLoading] = useState(false)

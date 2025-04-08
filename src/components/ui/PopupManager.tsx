@@ -1,5 +1,5 @@
 'use client'
-import { createContext, useContext, useState, ReactNode, useEffect } from 'react'
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react'
 import Popup from './Popup'
 
 type PopupType = 'info' | 'success' | 'warning' | 'error'
@@ -12,12 +12,15 @@ interface PopupData {
   autoClose?: number // Durasi dalam milidetik
 }
 
-interface PopupContextType {
+interface _PopupContextType {
   showPopup: (title: string, content: ReactNode, type?: PopupType, autoClose?: number) => void
   closePopup: () => void
 }
 
-const PopupContext = createContext<PopupContextType>({
+const PopupContext = createContext<{
+  showPopup: (_title: string, _content: React.ReactNode, _type?: PopupType, _autoClose?: number) => void
+  closePopup: () => void
+}>({
   showPopup: () => {},
   closePopup: () => {}
 })

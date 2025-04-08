@@ -1,3 +1,4 @@
+import React from 'react'
 import '@/styles/globals.css'
 import '@/styles/chart.css'
 import AppProviders from '@/components/AppProviders'
