@@ -152,4 +152,51 @@ export async function deletePurchase(id: string) {
       ? error 
       : new Error('Gagal menghapus data')
   }
-} 
+}
+
+/*
+INFORMASI PENTING:
+------------------
+File: calculator/lib/purchaseService.ts
+Fungsi: Layanan lengkap untuk manajemen pembelian dengan validasi dan error handling
+
+Fitur Penting:
+1. Interface untuk tipe data pembelian
+2. Fungsi savePurchase dengan validasi
+3. Fungsi getPurchaseHistory dengan error handling
+4. Fungsi deletePurchase dengan pengecekan akses
+5. Fungsi deleteAllPurchases dengan logging
+
+Catatan Update:
+- Jangan hapus validasi input
+- Pertahankan struktur error handling
+- Selalu gunakan checkTableAccess
+- Jangan ubah format data untuk Supabase
+
+KETERKAITAN ANTAR FILE:
+----------------------
+1. src/app/calculator/lib/db.ts
+   - Menggunakan interface yang sama
+   - Terkait dengan operasi database
+   - Mempengaruhi struktur data
+
+2. src/app/calculator/page.tsx
+   - Menggunakan fungsi savePurchase
+   - Terkait dengan penyimpanan data
+   - Mempengaruhi fungsionalitas kalkulator
+
+3. src/app/calculator/history/page.tsx
+   - Menggunakan fungsi getPurchaseHistory
+   - Terkait dengan pengambilan data
+   - Mempengaruhi tampilan riwayat
+
+4. src/lib/supabase.ts
+   - Menggunakan client Supabase
+   - Terkait dengan koneksi database
+   - Mempengaruhi operasi database
+
+5. src/app/calculator/data/ingredients.ts
+   - Data bahan digunakan untuk savePurchase
+   - Terkait dengan struktur data
+   - Mempengaruhi penyimpanan data
+*/ 

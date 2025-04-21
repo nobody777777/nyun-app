@@ -1,8 +1,9 @@
 'use client'
 import { Suspense, useEffect, useState } from 'react'
 import WeatherDisplay from '@/components/weather/WeatherDisplay'
-import SalesChart from '@/components/charts/SalesChart'
+import dynamic from 'next/dynamic'
 import { createClient } from '@supabase/supabase-js'
+import ChartWrapper from '@/components/charts/ChartWrapper'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -13,6 +14,17 @@ interface DailyStats {
   totalBread: number
   totalSales: number
 }
+
+// Tambahkan dynamic import untuk SalesChart
+const SalesChart = dynamic(
+  () => import('@/components/charts/SalesChart'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="animate-pulse h-48 sm:h-64 bg-gray-200 rounded-xl" />
+    )
+  }
+)
 
 export default function HomePage() {
   const [todayStats, setTodayStats] = useState<DailyStats>({
@@ -106,11 +118,9 @@ export default function HomePage() {
           {/* Konten Utama */}
           <div className="lg:col-span-2 space-y-3 sm:space-y-4 md:space-y-6 order-2 lg:order-1">
             {/* Statistik */}
-            <Suspense fallback={<div className="animate-pulse h-48 sm:h-64 bg-gray-200 rounded-xl" />}>
-              <div className="bg-white rounded-xl shadow-md p-3 sm:p-4 md:p-6">
-                <SalesChart />
-              </div>
-            </Suspense>
+            <div className="bg-white rounded-xl shadow-md p-3 sm:p-4 md:p-6">
+              <ChartWrapper />
+            </div>
           </div>
 
           {/* Sidebar Content */}

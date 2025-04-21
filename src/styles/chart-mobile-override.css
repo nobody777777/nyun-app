@@ -1,0 +1,25 @@
+/* PATCH: Mobile chart area always visible and not clipped, override all previous rules */
+@media (max-width: 768px) {
+  .sales-chart,
+  .chart-main,
+  .chart-wrapper {
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    padding-bottom: 24px !important;
+  }
+  .chart-wrapper {
+    min-height: 180px !important;
+    padding: 0.5rem !important;
+  }
+  .chart-wrapper canvas,
+  .chart-canvas {
+    width: 100% !important;
+    height: 260px !important;
+    min-height: 180px !important;
+    margin-bottom: 36px !important;
+    box-sizing: border-box;
+    display: block;
+  }
+}

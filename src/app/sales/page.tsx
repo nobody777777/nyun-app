@@ -45,6 +45,26 @@ export default function SalesPage() {
     })
   }, [currentDate, setCurrentMonth])
 
+  // Tambahkan gaya CSS untuk komponen kalender
+  useEffect(() => {
+    // Tambahkan CSS untuk kalender
+    const style = document.createElement('style')
+    style.textContent = `
+      @media (max-width: 640px) {
+        .calendar-grid-container {
+          font-size: 0.75rem;
+        }
+        .calendar-date {
+          font-size: 0.7rem;
+        }
+      }
+    `
+    document.head.appendChild(style)
+    return () => {
+      document.head.removeChild(style)
+    }
+  }, [])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -86,7 +106,8 @@ export default function SalesPage() {
         setTotalBread('')
         setTotalSales('')
         setDate(new Date().toISOString().split('T')[0])
-        await loadSalesData()
+        // Gunakan setReloadTrigger untuk memicu reload data
+        setReloadTrigger(prev => prev + 1)
       } else {
         const { error } = await supabase
           .from('daily_sales')
@@ -109,7 +130,8 @@ export default function SalesPage() {
         setTotalBread('')
         setTotalSales('')
         setDate(new Date().toISOString().split('T')[0])
-        await loadSalesData()
+        // Gunakan setReloadTrigger untuk memicu reload data
+        setReloadTrigger(prev => prev + 1)
       }
     } catch (error) {
       console.error('Error saving sales:', error)
@@ -151,32 +173,45 @@ export default function SalesPage() {
   }
 
   const handleEdit = (sale: SalesRecord) => {
-    setTotalBread(sale.total_bread.toString())
-    setTotalSales(sale.total_sales.toString())
-    setDate(sale.date)
-    setEditMode(true)
-    setCurrentEditId(sale.id)
+    // Saat mengedit data, tanggal perlu disesuaikan
+    // Tanggal di database disimpan dengan -1 hari, jadi untuk tampilan di form perlu +1 hari
+    const saleDate = new Date(sale.date);
+    saleDate.setDate(saleDate.getDate() + 1);
+    const formattedDate = saleDate.toISOString().split('T')[0];
+    
+    console.log('Edit data:', {
+      original: sale.date,
+      adjusted: formattedDate,
+      bread: sale.total_bread,
+      sales: sale.total_sales
+    });
+    
+    setTotalBread(sale.total_bread.toString());
+    setTotalSales(sale.total_sales.toString());
+    setDate(formattedDate);
+    setEditMode(true);
+    setCurrentEditId(sale.id);
     
     // Scroll ke form
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   const handleDelete = useCallback(async (id: string) => {
     try {
-      const { error } = await supabase
-        .from('daily_sales')
-        .delete()
-        .eq('id', id)
-
-      if (error) throw error
-
+                const { error } = await supabase
+                  .from('daily_sales')
+                  .delete()
+                  .eq('id', id)
+                
+                if (error) throw error
+                
       showPopup('Berhasil', 'Data penjualan berhasil dihapus', 'success')
       setReloadTrigger(prev => prev + 1)
-    } catch (error) {
+              } catch (error) {
       console.error('Error deleting sale:', error)
       showPopup('Error', 'Gagal menghapus data penjualan', 'error')
     }
-  }, [showPopup, setReloadTrigger])
+  }, [showPopup])
 
   const loadSalesData = useCallback(async () => {
     try {
@@ -190,38 +225,62 @@ export default function SalesPage() {
         start: startOfMonth.toISOString().split('T')[0],
         end: endOfMonth.toISOString().split('T')[0]
       })
-
-      // Tambahkan parameter untuk menghindari cache
-      const _timestamp = new Date().getTime()
+      
+      // Perbaiki format tanggal untuk database
+      const startStr = startOfMonth.toISOString().split('T')[0];
+      const endStr = endOfMonth.toISOString().split('T')[0];
+      
+      console.log('Query dengan range:', startStr, 'sampai', endStr);
       
       const { data, error } = await supabase
         .from('daily_sales')
         .select('*')
-        .gte('date', startOfMonth.toISOString().split('T')[0])
-        .lte('date', endOfMonth.toISOString().split('T')[0])
-        .order('date', { ascending: true })
-        .throwOnError() // Tambahkan ini untuk memastikan error ditangkap
+        .gte('date', startStr)
+        .lte('date', endStr)
+        .order('date', { ascending: true });
 
       if (error) {
-        console.error('Error saat mengambil data:', error)
-        throw error
+        console.error('Error saat mengambil data:', error);
+        throw error;
       }
       
-      console.log('Data berhasil diambil:', data)
-      setSalesData(data || [])
+      console.log('Data mentah dari database:', data);
       
-      await refreshData()
+      // Jika tidak ada data, tampilkan pesan yang lebih informatif
+      if (!data || data.length === 0) {
+        console.log('Tidak ada data penjualan untuk periode ini');
+        setSalesData([]);
+      } else {
+        // Tampilkan data yang ditemukan
+        console.log(`Ditemukan ${data.length} data penjualan:`, 
+          data.map(d => ({id: d.id, date: d.date, total_bread: d.total_bread}))
+        );
+        
+        // Pastikan semua data memiliki format yang benar
+        const formattedData = data.map(record => ({
+          ...record,
+          // Pastikan semua properti memiliki tipe data yang benar
+          total_bread: typeof record.total_bread === 'number' ? record.total_bread : parseInt(record.total_bread) || 0,
+          total_sales: typeof record.total_sales === 'number' ? record.total_sales : parseInt(record.total_sales) || 0,
+        }));
+        
+        setSalesData(formattedData);
+      }
+      
+      // Refresh data global
+      refreshData();
     } catch (error) {
-      console.error('Error loading sales data:', error)
-      showPopup('Error', 'Gagal memuat data penjualan', 'error')
+      console.error('Error loading sales data:', error);
+      setSalesData([]);
+      showPopup('Error', 'Gagal memuat data penjualan. Silakan coba lagi.', 'error');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [currentDate, setReloadTrigger, refreshData])
+  }, [currentDate, showPopup]);
 
   useEffect(() => {
-    loadSalesData()
-  }, [loadSalesData])
+    loadSalesData();
+  }, [loadSalesData, _reloadTrigger]);
 
   const getCalendarDays = (): CalendarDay[] => {
     const year = currentDate.getFullYear()
@@ -245,17 +304,30 @@ export default function SalesPage() {
     
     // Tambah hari bulan ini
     for (let date = 1; date <= lastDayOfMonth.getDate(); date++) {
-      const currentDate = new Date(year, month, date)
-      const dateString = currentDate.toISOString().split('T')[0]
+      const calDate = new Date(year, month, date)
       
+      // Mencari data penjualan berdasarkan tanggal tampilan
       const sales = salesData.find(sale => {
-        const saleDateString = new Date(sale.date).toISOString().split('T')[0]
-        return saleDateString === dateString
+        // Ambil tanggal yang sudah diformat untuk tampilan (sama dengan di tabel)
+        const displayDate = new Date(sale.date)
+        displayDate.setDate(displayDate.getDate() + 1)
+        
+        // Format tanggal untuk perbandingan
+        const saleDay = displayDate.getDate()
+        const saleMonth = displayDate.getMonth()
+        const saleYear = displayDate.getFullYear()
+        
+        // Bandingkan komponen tanggal (hari, bulan, tahun)
+        return (
+          date === saleDay && 
+          month === saleMonth && 
+          year === saleYear
+        )
       })
       
       days.push({
-        date: currentDate,
-        sales: sales,
+        date: calDate,
+        sales,
         isCurrentMonth: true
       })
     }
@@ -288,57 +360,6 @@ export default function SalesPage() {
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
             Pencatatan Penjualan
           </h1>
-          
-          {/* Navigasi Bulan */}
-          <div className="bg-white rounded-lg shadow-sm p-3">
-            <div className="flex flex-wrap items-center justify-center gap-2">
-              <button
-                onClick={() => {
-                  const newDate = new Date(currentDate)
-                  newDate.setMonth(currentDate.getMonth() - 1)
-                  setCurrentDate(newDate)
-                }}
-                className="px-2 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-              >
-                ←
-              </button>
-              <select
-                value={`${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`}
-                onChange={(e) => {
-                  const [year, month] = e.target.value.split('-').map(Number)
-                  const newDate = new Date(year, month - 1)
-                  setCurrentDate(newDate)
-                }}
-                className="px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                {Array.from({ length: 12 }, (_, i) => {
-                  const date = new Date()
-                  date.setMonth(date.getMonth() - i)
-                  return {
-                    value: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`,
-                    label: new Intl.DateTimeFormat('id-ID', { 
-                      year: 'numeric',
-                      month: 'long'
-                    }).format(date)
-                  }
-                }).map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              <button
-                onClick={() => {
-                  const today = new Date()
-                  const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
-                  setCurrentDate(firstDayOfMonth)
-                }}
-                className="px-2 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors whitespace-nowrap"
-              >
-                Bulan Ini
-              </button>
-            </div>
-          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-md p-6 space-y-6">
@@ -446,62 +467,109 @@ export default function SalesPage() {
 
         {/* Kalender */}
         <div className="mt-12 bg-white rounded-xl shadow-md p-2 sm:p-6">
-          <div className="calendar-wrapper">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2 sm:mb-4 px-2 sm:px-0">
+            <h2 className="text-xl font-bold text-gray-800">
+              Kalender Penjualan
+            </h2>
+          </div>
+          
+          {/* Navigasi Bulan */}
+          <div className="bg-white rounded-lg mb-4 px-2 sm:px-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => {
+                  const newDate = new Date(currentDate)
+                  newDate.setMonth(currentDate.getMonth() - 1)
+                  setCurrentDate(newDate)
+                }}
+                className="px-2 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+              >
+                ←
+              </button>
+              <select
+                value={`${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`}
+                onChange={(e) => {
+                  const [year, month] = e.target.value.split('-').map(Number)
+                  const newDate = new Date(year, month - 1)
+                  setCurrentDate(newDate)
+                }}
+                className="px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                {Array.from({ length: 12 }, (_, i) => {
+                  const date = new Date()
+                  date.setMonth(date.getMonth() - i)
+                  return {
+                    value: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`,
+                    label: new Intl.DateTimeFormat('id-ID', { 
+                      year: 'numeric',
+                      month: 'long'
+                    }).format(date)
+                  }
+                }).map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={() => {
+                  const today = new Date()
+                  const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
+                  setCurrentDate(firstDayOfMonth)
+                }}
+                className="px-2 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors whitespace-nowrap"
+              >
+                Bulan Ini
+              </button>
+            </div>
+          </div>
+          
+          <div className="calendar-wrapper bg-gray-50/80 p-2 rounded-lg">
             {/* Header Hari */}
-            <div className="calendar-header">
-              {['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'].map(day => (
-                <div key={day} className="font-medium text-gray-600">
+            <div className="grid grid-cols-7 gap-1 mb-1 text-center">
+              {['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'].map(day => (
+                <div key={day} className="text-xs font-medium text-gray-600 py-1">
                   {day}
                 </div>
               ))}
             </div>
 
             {/* Kalender Grid */}
-            <div className="calendar-grid">
-              {getCalendarDays().map((day, index) => (
+            <div className="grid grid-cols-7 gap-1">
+              {getCalendarDays().map((day, index) => {
+                // Tambahkan satu hari untuk menampilkan tanggal yang sama dengan tabel
+                const displayDate = new Date(day.date)
+                
+                return (
                 <div
                   key={index}
                   className={`
-                    calendar-cell rounded-lg border
-                    ${day.isCurrentMonth ? 'bg-white' : 'bg-gray-50'}
-                    ${day.sales ? 'border-blue-200' : 'border-gray-200'}
-                  `}
-                >
-                  <div className="text-gray-500">
-                    {day.date.getDate()}
+                      p-1 min-h-[60px] relative rounded border text-xs overflow-hidden
+                      ${day.isCurrentMonth ? 'bg-white/90' : 'bg-gray-50/50'}
+                      ${day.sales ? 'border-blue-200' : 'border-gray-100'}
+                      flex flex-col
+                    `}
+                  >
+                    <div className="text-gray-500 text-xs font-medium mb-0.5 pl-0.5">
+                      {displayDate.getDate()}
                   </div>
                   {day.sales ? (
                     <>
-                      <div className="text-gray-600">
-                        {day.sales.total_bread} roti
+                        <div className="text-green-600 text-xs font-medium mx-auto my-0.5">
+                          {day.sales.total_bread}
                       </div>
-                      <div className="font-medium text-blue-600">
-                        {formatCurrency(day.sales.total_sales)}
-                      </div>
-                      <div className="absolute bottom-0.5 right-0.5 flex gap-0.5">
-                        <button 
-                          onClick={() => handleEdit(day.sales!)}
-                          className="text-blue-500 hover:text-blue-700"
-                          title="Edit"
-                        >
-                          ✏️
-                        </button>
-                        <button 
-                          onClick={() => handleDelete(day.sales!.id)}
-                          className="text-red-500 hover:text-red-700"
-                          title="Hapus"
-                        >
-                          🗑️
-                        </button>
+                        <div className="font-medium text-blue-600 text-xs truncate w-full text-left pl-0.5 text-[10px] sm:text-xs">
+                          {formatCurrency(day.sales.total_sales).replace('Rp', '')}
                       </div>
                     </>
                   ) : day.isCurrentMonth ? (
-                    <div className="text-gray-400">
-                      Tidak ada data
+                      <div className="text-gray-400 text-xs mx-auto my-0.5">
+                        -
                     </div>
                   ) : null}
                 </div>
-              ))}
+                )
+              })}
             </div>
           </div>
         </div>
@@ -525,57 +593,56 @@ export default function SalesPage() {
         </div>
 
         {/* Tabel Data Penjualan */}
-        <div className="mt-12 bg-white rounded-xl shadow-md p-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-6">
+        <div className="mt-12 bg-white rounded-xl shadow-md p-2 sm:p-6">
+          <h2 className="text-xl font-bold text-gray-800 mb-2 sm:mb-4 px-2 sm:px-0">
             Daftar Penjualan Bulan Ini
           </h2>
           
           {loading ? (
-            <p className="text-center py-4">Memuat data...</p>
+            <p className="text-center py-2 sm:py-4">Memuat data...</p>
           ) : salesData.length === 0 ? (
-            <p className="text-center py-4 text-gray-500">Belum ada data penjualan untuk bulan ini</p>
+            <p className="text-center py-2 sm:py-4 text-gray-500">Belum ada data penjualan untuk bulan ini</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="bg-gray-50">
-                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Tanggal</th>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Total Roti</th>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Total Penjualan</th>
-                    <th className="px-4 py-2 text-right text-sm font-medium text-gray-600">Aksi</th>
+            <div className="overflow-x-auto -mx-2 sm:mx-0">
+              <table className="w-full border-collapse text-sm">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-1.5 sm:px-3 py-1.5 sm:py-2 text-left text-xs font-medium text-gray-600">Tanggal</th>
+                    <th className="px-1.5 sm:px-3 py-1.5 sm:py-2 text-left text-xs font-medium text-gray-600">Roti</th>
+                    <th className="px-1.5 sm:px-3 py-1.5 sm:py-2 text-left text-xs font-medium text-gray-600">Omzet</th>
+                    <th className="px-1.5 sm:px-3 py-1.5 sm:py-2 text-right text-xs font-medium text-gray-600">Aksi</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-gray-100">
                   {salesData.map((sale) => {
                     // Tambahkan satu hari ke tanggal untuk menampilkan
                     const displayDate = new Date(sale.date)
                     displayDate.setDate(displayDate.getDate() + 1)
                     
                     return (
-                      <tr key={sale.id} className="border-t hover:bg-gray-50">
-                        <td className="px-4 py-3 text-sm text-gray-700">
+                      <tr key={sale.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-1.5 sm:px-3 py-1.5 sm:py-2 text-xs text-gray-700">
                           {displayDate.toLocaleDateString('id-ID', {
-                            weekday: 'long',
                             day: 'numeric',
-                            month: 'long',
+                            month: 'short',
                             year: 'numeric'
                           })}
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-700">{sale.total_bread} biji</td>
-                        <td className="px-4 py-3 text-sm font-medium text-blue-600">
+                        <td className="px-1.5 sm:px-3 py-1.5 sm:py-2 text-xs text-gray-700">{sale.total_bread}</td>
+                        <td className="px-1.5 sm:px-3 py-1.5 sm:py-2 text-xs font-medium text-blue-600">
                           {formatCurrency(sale.total_sales)}
                         </td>
-                        <td className="px-4 py-3 text-right">
-                          <div className="flex justify-end gap-2">
+                        <td className="px-1.5 sm:px-3 py-1.5 sm:py-2 text-right">
+                          <div className="flex justify-end gap-1 sm:gap-2">
                             <button
                               onClick={() => handleEdit(sale)}
-                              className="px-2 py-1 text-xs text-blue-600 hover:text-blue-800"
+                              className="px-2 py-1 text-xs text-white bg-blue-500 hover:bg-blue-600 rounded-md transition-colors"
                             >
                               Edit
                             </button>
                             <button
                               onClick={() => handleDelete(sale.id)}
-                              className="px-2 py-1 text-xs text-red-600 hover:text-red-800"
+                              className="px-2 py-1 text-xs text-white bg-red-500 hover:bg-red-600 rounded-md transition-colors"
                             >
                               Hapus
                             </button>
@@ -593,3 +660,59 @@ export default function SalesPage() {
     </div>
   )
 } 
+
+/*
+INFORMASI PENTING:
+------------------
+File: sales/page.tsx
+Fungsi: Halaman utama untuk pencatatan dan manajemen data penjualan harian
+
+Fitur Penting:
+1. Form input data penjualan (jumlah roti dan omset)
+2. Kalender interaktif dengan data penjualan
+3. CRUD operasi untuk data penjualan
+4. Filter dan navigasi data per bulan
+5. Perhitungan total dan ringkasan penjualan
+6. Validasi input dan feedback pengguna
+7. Tabel detail penjualan dengan aksi
+
+Catatan Update:
+- Jangan hapus state currentMonth dan salesData
+- Pertahankan logika penyimpanan tanggal (H-1)
+- Selalu gunakan showPopup untuk feedback
+- Jangan ubah struktur komponen kalender
+- Pastikan validasi input tetap berjalan
+- Pertahankan format currency Indonesia
+
+KETERKAITAN ANTAR FILE:
+----------------------
+1. src/contexts/SalesContext.tsx
+   - Menyediakan state global untuk data penjualan
+   - Digunakan untuk refresh data otomatis
+   - Mengatur state bulan aktif
+   - Mempengaruhi tampilan dashboard
+
+2. src/components/ui/PopupManager.tsx
+   - Digunakan untuk notifikasi sukses/error
+   - Menangani konfirmasi hapus/batal
+   - Memberikan feedback ke pengguna
+   - Penting untuk UX aplikasi
+
+3. src/lib/supabase.ts
+   - Menangani operasi database
+   - Menyimpan dan mengambil data penjualan
+   - Mengatur koneksi ke Supabase
+   - Penting untuk persistensi data
+
+4. src/app/dashboard/page.tsx
+   - Menggunakan data untuk ringkasan
+   - Menampilkan statistik penjualan
+   - Terkait dengan visualisasi data
+   - Mempengaruhi tampilan utama
+
+5. src/components/charts/SalesChart.tsx
+   - Menggunakan data untuk grafik
+   - Menampilkan trend penjualan
+   - Terkait dengan visualisasi data
+   - Mempengaruhi analisis penjualan
+*/ 

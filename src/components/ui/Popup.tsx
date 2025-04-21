@@ -102,4 +102,50 @@ export default function Popup({ isOpen, onClose, title, children, type = 'info' 
       </Dialog>
     </Transition>
   )
-} 
+}
+
+/*
+INFORMASI PENTING:
+------------------
+File: Popup.tsx
+Fungsi: Komponen UI untuk menampilkan popup/notifikasi
+
+Fitur Penting:
+1. Animasi transisi smooth
+2. Responsive design
+3. Custom icons untuk setiap tipe
+4. Keyboard accessibility
+
+Catatan Update:
+- Jangan hapus typeConfig karena penting untuk styling
+- Transisi harus dipertahankan untuk UX yang baik
+- Selalu gunakan Dialog dari @headlessui/react
+- Jangan ubah struktur props interface
+
+KETERKAITAN ANTAR FILE:
+----------------------
+1. src/components/ui/PopupManager.tsx
+   - PopupManager menggunakan Popup.tsx untuk menampilkan notifikasi
+   - PopupManager mengatur state dan logika, Popup.tsx menangani tampilan
+   - Kedua file ini bekerja sama untuk menampilkan notifikasi
+
+2. src/styles/globals.css
+   - Berisi styling untuk popup dan animasi
+   - Menerapkan animasi fadeIn, fadeOut, scaleIn, scaleOut
+   - Terkait dengan tampilan dan transisi popup
+
+3. src/components/ServiceWorkerRegistration.tsx
+   - ServiceWorkerRegistration menggunakan Popup melalui PopupManager
+   - Menampilkan notifikasi update PWA
+   - Terkait dengan fitur update aplikasi
+
+4. src/app/sales/page.tsx, src/app/calculator/page.tsx, dll
+   - Hampir semua halaman menggunakan Popup melalui PopupManager
+   - Menampilkan notifikasi sukses, error, warning, dll
+   - Terkait dengan UX dan feedback pengguna
+
+5. @headlessui/react
+   - Popup.tsx menggunakan komponen Dialog dari @headlessui/react
+   - Menyediakan aksesibilitas dan interaksi keyboard
+   - Terkait dengan implementasi popup yang accessible
+*/ 

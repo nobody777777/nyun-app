@@ -1,0 +1,25 @@
+/* Patch khusus agar chart di mobile tidak terpotong dan seluruh isi area hijau selalu terlihat */
+@media (max-width: 768px) {
+  .sales-chart,
+  .chart-main,
+  .chart-wrapper {
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    padding-bottom: 20px !important;
+  }
+  .chart-wrapper {
+    min-height: 180px !important;
+    padding: 0.5rem !important;
+  }
+  .chart-wrapper canvas,
+  .chart-canvas {
+    width: 100% !important;
+    height: 260px !important;
+    min-height: 180px !important;
+    margin-bottom: 60px !important; /* Tambah margin untuk label tanggal */
+    box-sizing: border-box;
+    display: block;
+  }
+}

@@ -105,4 +105,60 @@ export async function updateDailySales({ date, total_sales, total_bread }: {
     console.error('Error updating daily sales:', error)
     throw error
   }
-} 
+}
+
+/*
+INFORMASI PENTING:
+------------------
+File: lib/db-helpers.ts
+Fungsi: Helper functions untuk operasi database
+
+Fitur Penting:
+1. Query builder untuk data penjualan
+2. Format data untuk komponen kalender
+3. Error handling untuk database
+4. Optimasi query performance
+5. Type safety untuk data
+6. Caching mekanisme
+7. Validasi input parameter
+
+Catatan Update:
+- Jangan hapus type checking
+- Pertahankan error handling
+- Selalu gunakan prepared statements
+- Jangan ubah format response
+- Pastikan query optimization
+- Pertahankan caching logic
+
+KETERKAITAN ANTAR FILE:
+----------------------
+1. src/components/sales/SalesCalendar.tsx
+   - Menggunakan getDailySalesTotal
+   - Membutuhkan format data spesifik
+   - Terkait dengan tampilan kalender
+   - Penting untuk visualisasi
+
+2. src/lib/supabase.ts
+   - Menyediakan koneksi database
+   - Digunakan untuk query
+   - Mengatur error handling
+   - Penting untuk operasi data
+
+3. src/app/sales/page.tsx
+   - Menggunakan helper functions
+   - Membutuhkan data terformat
+   - Terkait dengan operasi CRUD
+   - Mempengaruhi state aplikasi
+
+4. src/contexts/SalesContext.tsx
+   - Menggunakan query functions
+   - Mempengaruhi state global
+   - Terkait dengan refresh data
+   - Penting untuk sinkronisasi
+
+5. src/types/database.ts
+   - Mendefinisikan tipe data
+   - Digunakan untuk type safety
+   - Mempengaruhi validasi
+   - Penting untuk maintainability
+*/ 

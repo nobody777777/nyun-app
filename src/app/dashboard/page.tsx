@@ -153,3 +153,50 @@ export default function DashboardPage() {
     </div>
   )
 } 
+
+/*
+INFORMASI PENTING:
+------------------
+File: app/dashboard/page.tsx
+Fungsi: Halaman utama dashboard
+
+Fitur Penting:
+1. Tampilan ringkasan penjualan
+2. Grafik penjualan
+3. Refresh data otomatis
+4. Loading state
+5. Error handling
+
+Catatan Update:
+- Jangan hapus komponen utama
+- Pertahankan fungsi refresh
+- Selalu gunakan error handling
+- Jangan ubah struktur layout
+
+KETERKAITAN ANTAR FILE:
+----------------------
+1. src/contexts/SalesContext.tsx
+   - Menggunakan context untuk data
+   - Terkait dengan state management
+   - Mempengaruhi data penjualan
+
+2. src/components/charts/SalesChart.tsx
+   - Menggunakan komponen grafik
+   - Terkait dengan visualisasi
+   - Mempengaruhi tampilan
+
+3. src/lib/supabase.ts
+   - Digunakan untuk fetch data
+   - Terkait dengan database
+   - Mempengaruhi data penjualan
+
+4. src/app/calculator/page.tsx
+   - Tidak langsung terkait
+   - Terkait dengan fitur kalkulator
+   - Mempengaruhi data penjualan
+
+5. src/styles/dashboard.css
+   - Terkait dengan styling
+   - Mempengaruhi tampilan
+   - Mempengaruhi UI/UX
+*/ 

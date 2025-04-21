@@ -20,6 +20,8 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="RotiBarok" />
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" href="/icon-192x192.png" />
+        <script src="/js/touch-enhancer.js"></script>
+        <script src="/js/mobile-fullscreen.js"></script>
         <script dangerouslySetInnerHTML={{
           __html: `
             // Check for service worker
@@ -31,14 +33,14 @@ export default function RootLayout({
                   // Listen for updates
                   registration.addEventListener('updatefound', () => {
                     const newWorker = registration.installing;
-                    newWorker.addEventListener('statechange', () => {
-                      if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                        // New update available
-                        if (confirm('Update aplikasi tersedia. Muat ulang sekarang?')) {
-                          window.location.reload();
+                    if (newWorker) {
+                      newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                          // Biarkan ServiceWorkerRegistration.tsx menangani notifikasi update
+                          console.log('New version available');
                         }
-                      }
-                    });
+                      });
+                    }
                   });
                   
                 }).catch(function(err) {
@@ -49,10 +51,7 @@ export default function RootLayout({
                 navigator.serviceWorker.addEventListener('message', (event) => {
                   if (event.data && event.data.type === 'APP_UPDATE') {
                     console.log('New version available:', event.data.version);
-                    // Show update notification to user
-                    if (confirm('Versi baru tersedia. Perbarui sekarang?')) {
-                      window.location.reload();
-                    }
+                    // Biarkan ServiceWorkerRegistration.tsx menangani notifikasi update
                   }
                 });
               });

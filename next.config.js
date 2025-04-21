@@ -4,7 +4,6 @@ const nextConfig = {
   experimental: {
     forceSwcTransforms: true,
   },
-  output: 'export', // Untuk ekspor statis
   images: {
     unoptimized: true, // Diperlukan untuk ekspor statis
   },

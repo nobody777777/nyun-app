@@ -57,6 +57,8 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   width: 100%;
   margin-top: 1rem;
+  height: auto;
+  overflow: hidden;
 }
 
 /* Pastikan posisi tetap di atas */
@@ -100,18 +102,134 @@ body {
 .chart-controls {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
-  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  justify-content: center;
+  max-width: 100%;
 }
 
-.control-group {
+.dataset-toggles,
+.indicator-toggles,
+.view-toggles {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.toggle-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  background: #f3f4f6;
+  color: #4b5563;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  min-width: 60px;
+  text-align: center;
+}
+
+.toggle-btn:hover {
+  background: #e5e7eb;
+}
+
+.toggle-btn.active {
+  background: #3b82f6;
+  color: white;
+}
+
+/* Style untuk tombol fullscreen */
+.toggle-btn[title="Fullscreen"],
+.toggle-btn[title="Keluar Fullscreen"] {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  background: #f8fafc;
-  padding: 0.25rem;
-  border-radius: 0.5rem;
-  border: 1px solid #e2e8f0;
+  justify-content: center;
+  padding: 0.5rem;
+  min-width: 42px;
+  aspect-ratio: 1;
+}
+
+.toggle-btn[title="Keluar Fullscreen"] {
+  background-color: #f97316;
+  color: white;
+  border: 1px solid #ea580c;
+}
+
+.toggle-btn[title="Fullscreen"]:hover {
+  background-color: #e5e7eb;
+}
+
+.toggle-btn[title="Keluar Fullscreen"]:hover {
+  background-color: #ea580c;
+}
+
+/* Mobile layout untuk tombol-tombol */
+@media (max-width: 768px) {
+  .chart-controls {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, auto);
+    gap: 8px;
+    width: 100%;
+    max-width: 100%;
+    padding: 0 4px;
+    margin-bottom: 10px;
+  }
+  
+  /* Setiap tombol dengan full width di grid cell nya */
+  .toggle-btn {
+    width: 100%;
+    height: auto;
+    padding: 0 0.5rem;
+    font-size: 0.8rem;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+  }
+  
+  /* Memastikan tombol Prediksi memiliki warna yang benar */
+  .toggle-btn[title="Prediksi"].active,
+  .toggle-btn[title="Prediksi"][style*="background-color"] {
+    background-color: #8b5cf6 !important;
+    color: white !important;
+  }
+}
+
+/* Optimasi untuk layar kecil */
+@media (max-width: 359px) {
+  .chart-controls {
+    gap: 6px;
+    padding: 0 2px;
+  }
+  
+  .toggle-btn {
+    height: 36px;
+    padding: 0 0.25rem;
+    font-size: 0.75rem;
+  }
+}
+
+/* Fix untuk dark mode */
+@media (prefers-color-scheme: dark) {
+  .toggle-btn {
+    background: #374151;
+    color: #e5e7eb;
+  }
+  
+  .toggle-btn:hover {
+    background: #4b5563;
+  }
+  
+  .toggle-btn.active {
+    background: #3b82f6;
+    color: white;
+  }
+  
+  .toggle-btn[title="Prediksi"].active {
+    background-color: #8b5cf6 !important;
+  }
 }
 
 /* Warning message */
@@ -150,14 +268,295 @@ body {
 /* Chart wrapper */
 .chart-wrapper {
   position: relative;
-  z-index: 1;
-  height: 400px;
+  width: 100%;
+  height: 380px;
   margin-top: 0.5rem;
   background: white;
   border-radius: 0.75rem;
   border: 1px solid #e2e8f0;
-  padding: 1rem;
-  overflow: hidden;
+  padding: 0.75rem;
+  overflow: visible;
+  touch-action: pan-y !important;
+  margin-bottom: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  padding-bottom: 30px !important;
+  margin-bottom: 20px !important;
+}
+
+.chart-wrapper canvas {
+  cursor: grab;
+  transition: cursor 0.2s ease;
+  image-rendering: crisp-edges;
+  image-rendering: -webkit-optimize-contrast;
+  touch-action: pan-y !important;
+}
+
+/* Saat drag aktif, ubah kursor */
+.chart-wrapper canvas:active {
+  cursor: grabbing !important;
+}
+
+/* Gaya untuk animasi transisi saat zoom/pan */
+.chart-canvas {
+  cursor: default;
+  transition: transform 0.05s ease;
+  touch-action: pan-y !important;
+  image-rendering: crisp-edges;
+  image-rendering: -webkit-optimize-contrast;
+  margin-bottom: 15px !important;
+}
+
+.chart-canvas:active {
+  cursor: grabbing;
+}
+
+/* Animasi untuk tooltip */
+.chart-tooltip {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.2s ease-out;
+}
+
+.chart-tooltip-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Gaya untuk tombol zoom */
+.zoom-controls {
+  display: none;
+}
+
+/* Optimasi untuk touch devices */
+@media (pointer: coarse) {
+  .chart-wrapper {
+    touch-action: pan-y !important;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+  
+  .chart-wrapper canvas {
+    touch-action: pan-y !important;
+  }
+  
+  /* Pastikan area chart cukup besar untuk interaksi sentuh */
+  .chart-main {
+    min-height: 280px !important;
+    touch-action: pan-y !important;
+  }
+  
+  /* Tambahkan padding di sisi chart untuk memudahkan sentuhan */
+  .chart-wrapper {
+    padding: 12px !important;
+  }
+}
+
+/* Chart content */
+.chart-content {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.chart-main {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  touch-action: auto;
+  overflow: visible;
+}
+
+/* RSI Styling */
+.chart-main canvas {
+  width: 100% !important;
+  height: 100% !important;
+  image-rendering: auto;
+  transform-origin: center center;
+}
+
+/* Chart controls */
+.chart-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.dataset-toggles,
+.indicator-toggles,
+.view-toggles {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.toggle-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  background: #f3f4f6;
+  color: #4b5563;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.toggle-btn:hover {
+  background: #e5e7eb;
+}
+
+.toggle-btn.active {
+  background: #3b82f6;
+  color: white;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .chart-controls {
+    flex-direction: column;
+  }
+  
+  .dataset-toggles,
+  .indicator-toggles,
+  .view-toggles {
+    justify-content: center;
+  }
+  
+  .chart-wrapper {
+    height: 300px;
+  }
+}
+
+/* Hide RSI by default */
+.chart-rsi {
+  width: 100%;
+  height: 150px;
+  position: relative;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+}
+
+/* Show RSI when active */
+.chart-wrapper.show-rsi .chart-content {
+  grid-template-rows: 70% 30%;
+}
+
+.chart-wrapper.show-rsi .chart-rsi {
+  display: block;
+}
+
+/* Mobile Optimization */
+@media (max-width: 768px) {
+  .chart-wrapper {
+    height: 340px;
+    padding: 0.6rem;
+  }
+
+  .chart-content {
+    grid-template-rows: 65% 35%;
+  }
+
+  .rsi-value {
+    font-size: 0.7rem;
+    padding: 1px 4px;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .chart-wrapper {
+    background: #1f2937;
+    border-color: #374151;
+  }
+
+  .rsi-value {
+    background: #374151;
+    color: #e5e7eb;
+  }
+
+  .ema-14 {
+    stroke: #60a5fa;
+  }
+}
+
+/* Animations */
+.chart-wrapper {
+  transition: all 0.3s ease;
+}
+
+.chart-content {
+  transition: grid-template-rows 0.3s ease;
+}
+
+.rsi-value {
+  transition: all 0.2s ease;
+}
+
+.ema-line {
+  transition: stroke-dasharray 0.3s ease;
+}
+
+/* Remove unnecessary margins and paddings */
+.sales-chart__rsi {
+  position: relative;
+  height: 100%;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 1rem;
+  background: white;
+}
+
+.sales-chart__rsi canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.sales-chart__rsi-lines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.rsi-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  opacity: 0.15;
+  transition: opacity 0.2s ease;
+}
+
+.rsi-line.overbought {
+  top: 30%;
+  background-color: rgb(239, 68, 68);
+}
+
+.rsi-line.middle {
+  top: 50%;
+  background-color: rgb(107, 114, 128);
+}
+
+.rsi-line.oversold {
+  top: 70%;
+  background-color: rgb(34, 197, 94);
+}
+
+.sales-chart__rsi:hover .rsi-line {
+  opacity: 0.3;
+}
+
+/* Hover Effects */
+.rsi-value:hover {
+  transform: translateY(-50%) scale(1.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.chart-wrapper:hover .ema-14 {
+  stroke-width: 2;
+  opacity: 1;
 }
 
 /* Area kosong untuk menghilangkan informasi */
@@ -215,6 +614,8 @@ body {
 @media (max-width: 768px) {
   .chart-container {
     padding: 1rem;
+    height: auto;
+    max-height: none;
   }
 
   .chart-header {
@@ -235,20 +636,40 @@ body {
   }
 
   .chart-controls {
-    gap: 0.75rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(60px, auto));
+    grid-auto-flow: row;
+    gap: 0.3rem;
+    overflow-x: hidden;
+    justify-content: center;
+    margin-bottom: 0.5rem;
   }
-
-  .control-group {
-    padding: 0.2rem;
+  
+  .dataset-toggles,
+  .indicator-toggles,
+  .view-toggles {
+    display: contents; /* Memungkinkan child elements untuk diposisikan oleh grid parent */
   }
-
-  .chart-button {
-    padding: 0.4rem 0.6rem;
-    font-size: 0.8125rem;
+  
+  .toggle-btn {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    min-width: 55px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* Style khusus untuk tombol Prediksi */
+  .toggle-btn[title="Prediksi"] {
+    background-color: #8b5cf6;
+    color: white;
   }
 
   .chart-wrapper {
     height: 300px;
+    max-height: 300px;
   }
 
   /* Button styling */
@@ -260,10 +681,20 @@ body {
   /* Fullscreen mode */
   .fullscreen-chart {
     padding: 0.5rem !important;
+    overflow-y: auto !important;
+    max-height: 100vh !important;
+    position: relative !important;
   }
 
   .fullscreen-chart .chart-wrapper {
-    min-height: 85vh;
+    min-height: auto !important;
+    height: auto !important;
+    overflow: visible !important;
+    padding-bottom: 100px !important;
+  }
+
+  .fullscreen-chart .chart-canvas {
+    margin-bottom: 80px !important;
   }
 
   .fullscreen-chart .chart-controls,
@@ -282,38 +713,52 @@ body {
   }
 }
 
-/* Button styling */
+/* Base button styling */
 .chart-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.375rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  transition: all 0.2s ease;
-  border: none;
-  cursor: pointer;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0.35rem 0.5rem !important;
+  border-radius: 0.45rem !important;
+  font-size: 0.78rem !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease !important;
+  cursor: pointer !important;
+  min-width: 64px !important;
+  border: 1px solid transparent !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
 }
 
 .chart-button.primary {
-  background: #3b82f6;
-  color: white;
+  background: #3b82f6 !important;
+  color: white !important;
+  border-color: #2563eb !important;
 }
 
 .chart-button.primary:hover {
-  background: #2563eb;
+  background: #2563eb !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
 }
 
 .chart-button.secondary {
-  background: white;
-  color: #475569;
-  border: 1px solid #e2e8f0;
+  background: white !important;
+  color: #475569 !important;
+  border-color: #e2e8f0 !important;
 }
 
 .chart-button.secondary:hover {
-  background: #f8fafc;
-  border-color: #cbd5e1;
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05) !important;
+}
+
+.chart-button.active {
+  background: #3b82f6 !important;
+  color: white !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3) !important;
 }
 
 /* Stats Grid */
@@ -412,16 +857,14 @@ body {
 /* Animasi loading */
 .chart-loading {
   display: flex;
-  justify-content: center;
   align-items: center;
-  height: 400px;
-  background: white;
-  border-radius: 1rem;
+  justify-content: center;
+  height: 100%;
 }
 
 .loading-spinner {
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2rem;
+  height: 2rem;
   border: 3px solid #e2e8f0;
   border-top-color: #3b82f6;
   border-radius: 50%;
@@ -456,9 +899,22 @@ body {
 .chart-wrapper {
   position: relative;
   width: 100%;
+  height: 100%;
   min-height: 250px;
-  touch-action: pan-y pinch-zoom;
-  transition: all 0.3s ease;
+  max-height: 100%;
+  background: white;
+  overflow: visible;
+  padding-bottom: 8px;
+  margin-top: 0rem;
+}
+
+
+.chart-wrapper canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  margin-bottom: 68px;
+  box-sizing: border-box;
 }
 
 /* Fullscreen mode */
@@ -468,29 +924,91 @@ body {
   left: 0 !important;
   width: 100vw !important;
   height: 100vh !important;
-  background: white;
+  background: rgba(255, 255, 255, 0.128);
   z-index: 9999;
-  padding: 1.5rem !important;
+  padding: 1rem !important;
   margin: 0 !important;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
+  overflow-y: scroll !important;
+  overflow-x: hidden !important;
 }
 
 .fullscreen-chart .chart-wrapper {
   width: 100%;
-  height: 100%;
+  height: auto;
+  min-height: 50vh;
   padding: 1rem;
+  padding-bottom: 150px;
+  touch-action: auto !important;
+  overflow: visible !important;
 }
 
+.fullscreen-chart .chart-wrapper,
+.fullscreen-chart .chart-main {
+  height: auto !important;
+  max-height: none !important;
+}
 .fullscreen-chart canvas {
-  max-height: 90vh !important;
+  height: 40vh !important;
+  max-height: 45vh !important;
+  min-height: 180px !important;
   width: 100% !important;
+  margin-bottom: 150px !important;
+  box-sizing: border-box;
+  display: block;
   transform: none !important;
+  touch-action: auto !important;
 }
 
 /* Responsif untuk mobile */
 @media (max-width: 768px) {
+  /* Fullscreen pada mobile */
+  .fullscreen-chart {
+    padding: 0.5rem !important;
+    padding-top: 0.5rem !important;
+    overflow-y: scroll !important;
+    overflow-x: hidden !important;
+    height: 100% !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  
+  .fullscreen-chart .chart-wrapper {
+    min-height: 40vh;
+    padding: 0.5rem;
+    padding-bottom: 200px;
+    margin-bottom: 1rem;
+  }
+  
+  .fullscreen-chart canvas {
+    height: auto !important;
+    min-height: 180px !important;
+    max-height: 40vh !important;
+    margin-bottom: 180px !important;
+    touch-action: auto !important;
+  }
+  
+  .fullscreen-chart .chart-controls {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .fullscreen-chart .chart-controls button {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    min-width: auto;
+    margin: 0.125rem;
+  }
+  
   .chart-container {
     padding: 1rem;
     margin: 0;
@@ -659,13 +1177,18 @@ body {
 .chart-container {
   @apply relative w-full;
   min-height: 300px;
+  max-height: 800px;
+  display: flex;
+  flex-direction: column;
 }
 
 .chart-wrapper {
   width: 100%;
   height: 100%;
   min-height: 300px;
+  max-height: 400px;
   position: relative;
+  flex: 1;
 }
 
 canvas {
@@ -703,444 +1226,1039 @@ canvas {
   font-weight: 600;
 }
 
-/* Optimasi untuk landscape */
-@media (orientation: landscape) {
-  .chart-container {
-    padding: 0.75rem;
+/* Animasi dan transisi */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
   }
-
-  .chart-wrapper {
-    min-height: 85vh;
-    padding: 0.5rem;
-  }
-
-  .fullscreen-chart {
-    padding: 0.5rem !important;
-  }
-
-  .fullscreen-chart canvas {
-    max-height: 85vh !important;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-/* Dark Mode Support */
-@media (prefers-color-scheme: dark) {
-  .chart-container {
-    background: #1e293b;
+@keyframes slideIn {
+  from {
+    transform: translateX(-20px);
+    opacity: 0;
   }
-
-  .chart-title {
-    color: #f8fafc;
-  }
-
-  .stats-grid,
-  .control-group,
-  .chart-legend {
-    background: #0f172a;
-    border-color: #334155;
-  }
-
-  .stats-card {
-    background: #1e293b;
-    border-color: #334155;
-  }
-
-  .stats-card .title {
-    color: #94a3b8;
-  }
-
-  .stats-card .value {
-    color: #f8fafc;
-  }
-
-  .chart-button.secondary {
-    background: #1e293b;
-    color: #e2e8f0;
-    border-color: #334155;
-  }
-
-  .chart-button.secondary:hover {
-    background: #334155;
-  }
-
-  .chart-wrapper {
-    background: #1e293b;
-    border-color: #334155;
-  }
-
-  .legend-item {
-    color: #e2e8f0;
+  to {
+    transform: translateX(0);
+    opacity: 1;
   }
 }
 
-@media screen and (orientation: landscape) {
-  .fullscreen-chart {
-    padding: 2rem !important;
+@keyframes scaleIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
   }
-
-  .fullscreen-chart canvas {
-    max-height: 90vh !important;
-    width: auto !important;
+  to {
+    transform: scale(1);
+    opacity: 1;
   }
 }
 
-@media screen and (max-width: 768px) {
-  .fullscreen-chart {
-    padding: 1rem !important;
-  }
-  
-  .chart-wrapper {
+.sales-chart {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.sales-chart__content {
+  animation: scaleIn 0.5s ease-out;
+}
+
+.sales-chart__controls {
+  animation: slideIn 0.5s ease-out;
+}
+
+.sales-chart__btn {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sales-chart__btn:active {
+  transform: scale(0.95);
+}
+
+.sales-chart__rsi {
+  width: 100%;
+  height: 120px;
+  position: relative;
+  background: white;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 0.5rem;
+}
+
+.sales-chart__rsi canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* RSI Lines */
+.sales-chart__rsi-lines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  pointer-events: none;
+}
+
+.rsi-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.rsi-line.overbought {
+  top: 20%;
+  background: rgba(239, 68, 68, 0.2);
+}
+
+.rsi-line.middle {
+  top: 50%;
+  background: rgba(59, 130, 246, 0.2);
+}
+
+.rsi-line.oversold {
+  top: 80%;
+  background: rgba(34, 197, 94, 0.2);
+}
+
+/* Mobile optimization */
+@media (max-width: 768px) {
+  .sales-chart__content {
     height: 350px;
   }
-}
-
-@media screen and (max-width: 768px) and (orientation: landscape) {
-  .fullscreen-chart {
-    padding: 0.75rem !important;
-  }
-
-  .fullscreen-chart canvas {
-    max-height: 85vh !important;
-  }
-}
-
-/* Animasi transisi fullscreen */
-.chart-wrapper {
-  transition: all 0.3s ease-in-out;
-}
-
-.fullscreen-chart {
-  transition: all 0.3s ease-in-out;
-}
-
-/* Penyesuaian untuk perangkat iOS */
-@supports (-webkit-touch-callout: none) {
-  .fullscreen-chart {
-    height: -webkit-fill-available !important;
-  }
-}
-
-/* Pastikan chart tidak menutupi menu */
-@media (max-width: 768px) {
-  .chart-container {
-    position: relative !important;
-    z-index: 1 !important;
+  
+  .sales-chart__content.show-rsi {
+    height: 500px;
   }
   
-  .chart-wrapper {
-    position: relative !important;
-    z-index: 1 !important;
+  .sales-chart__rsi {
+    height: 120px;
+    padding: 0.75rem;
+  }
+  
+  .rsi-line span {
+    font-size: 0.7rem;
+    padding: 1px 4px;
+    right: 2px;
   }
 }
 
-/* Styling untuk bagian pencatatan perbulan */
-.monthly-records {
-  background: white;
-  border-radius: 0.75rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  margin: 1rem 0;
-  overflow: hidden;
+/* Portrait mode warning */
+.sales-chart__orientation-warning {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.95);
+  color: white;
+  padding: 2rem;
+  border-radius: 12px;
+  text-align: center;
+  z-index: 1000;
+  max-width: 90%;
+  width: 400px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
-.monthly-header {
+@media (orientation: portrait) {
+  .sales-chart:fullscreen .sales-chart__orientation-warning {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+}
+
+.sales-chart__header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1rem;
-  background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.month-navigation {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  width: 100%;
-}
-
-.month-button {
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  background: white;
-  border: 1px solid #e2e8f0;
-  color: #475569;
-  font-size: 0.875rem;
-  font-weight: 500;
-  transition: all 0.2s;
-  white-space: nowrap;
-}
-
-.month-button:hover {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
-}
-
-.month-display {
-  font-weight: 600;
-  color: #1e293b;
-  padding: 0 1rem;
-}
-
-.records-content {
-  padding: 1rem;
-}
-
-.records-grid {
-  display: grid;
+  flex-direction: column;
   gap: 1rem;
   margin-bottom: 1rem;
 }
 
-.record-card {
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.5rem;
-  padding: 1rem;
-  transition: all 0.2s;
-}
-
-.record-card:hover {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  transform: translateY(-2px);
-}
-
-.record-header {
+.sales-chart__title-group {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.5rem;
 }
 
-.record-date {
+.sales-chart__title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.sales-chart:fullscreen .sales-chart__title {
+  color: #ffffff;
+}
+
+.sales-chart__actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.sales-chart__controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: rgba(249, 250, 251, 0.8);
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+}
+
+.sales-chart__control-group {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.sales-chart__btn {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
   font-weight: 500;
+  transition: all 0.2s ease;
+  background: white;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.sales-chart__btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.sales-chart__btn.primary {
+  background: #2563eb;
+  color: white;
+  border-color: #1d4ed8;
+}
+
+.sales-chart__btn.primary:hover {
+  background: #1d4ed8;
+}
+
+/* Responsive control buttons */
+@media (max-width: 640px) {
+  .sales-chart__controls {
+    padding: 0.75rem;
+    gap: 0.5rem;
+  }
+  
+  .sales-chart__btn {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.8125rem;
+  }
+}
+
+/* Mobile optimization */
+@media (max-width: 768px) {
+  .sales-chart {
+    padding: 1rem;
+    border-radius: 8px;
+  }
+  
+  .sales-chart__content {
+    height: 300px !important;
+    max-height: 300px !important;
+  }
+  
+  .sales-chart__rsi {
+    height: 100px !important;
+    margin-top: 0.5rem;
+  }
+  
+  .rsi-line span {
+    font-size: 0.7rem;
+    padding: 3px 6px;
+    right: 8px;
+  }
+}
+
+/* Styling untuk Trend Indicator */
+.sales-chart__trend-indicator {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-top: 1rem;
+}
+
+.trend-arrow {
+  font-size: 2rem;
+  font-weight: bold;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.trend-arrow.up {
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.trend-arrow.down {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.trend-arrow.sideways {
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.trend-text {
+  font-size: 0.875rem;
   color: #475569;
 }
 
-.record-amount {
+.prediction-value {
+  font-size: 1.125rem;
   font-weight: 600;
-  color: #2563eb;
-}
-
-/* Responsif untuk mobile */
-@media (max-width: 768px) {
-  .monthly-header {
-    flex-direction: column;
-    gap: 0.75rem;
-    padding: 0.75rem;
-  }
-
-  .month-navigation {
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 0.5rem;
-  }
-
-  .month-button {
-    padding: 0.375rem 0.75rem;
-    font-size: 0.75rem;
-    flex: 0 1 auto;
-    min-width: auto;
-  }
-
-  select.month-select {
-    max-width: 120px;
-    font-size: 0.75rem;
-    padding: 0.375rem 0.5rem;
-  }
-
-  .month-display {
-    font-size: 0.875rem;
-    padding: 0;
-  }
-
-  .records-content {
-    padding: 0.75rem;
-  }
-
-  .record-card {
-    padding: 0.75rem;
-  }
-
-  .record-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.25rem;
-  }
-
-  .record-date {
-    font-size: 0.75rem;
-  }
-
-  .record-amount {
-    font-size: 0.875rem;
-  }
-}
-
-/* Optimasi untuk layar kecil */
-@media (max-width: 360px) {
-  .monthly-header {
-    padding: 0.5rem;
-  }
-
-  .month-button {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.7rem;
-  }
-
-  select.month-select {
-    max-width: 100px;
-    font-size: 0.7rem;
-    padding: 0.25rem 0.375rem;
-  }
-
-  .records-content {
-    padding: 0.5rem;
-  }
-
-  .record-card {
-    padding: 0.5rem;
-  }
-}
-
-/* Optimasi untuk tablet */
-@media (min-width: 768px) and (max-width: 1024px) {
-  .records-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-/* Optimasi untuk desktop */
-@media (min-width: 1024px) {
-  .records-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
+  color: #1f2937;
+  display: block;
+  margin-top: 0.25rem;
 }
 
 /* Dark mode support */
 @media (prefers-color-scheme: dark) {
-  .monthly-records {
-    background: #1e293b;
+  .sales-chart {
+    background: #1f2937;
+    border-color: #374151;
   }
-
-  .monthly-header {
-    background: #0f172a;
-    border-color: #334155;
+  
+  .sales-chart__rsi {
+    background: rgba(17, 24, 39, 0.8);
+    border-color: #374151;
   }
-
-  .month-button {
-    background: #1e293b;
-    border-color: #334155;
-    color: #e2e8f0;
+  
+  .rsi-line span {
+    background: rgba(31, 41, 55, 0.95);
+    color: #e5e7eb;
   }
-
-  .month-button:hover {
-    background: #334155;
+  
+  .rsi-line.overbought span {
+    background: rgba(239, 68, 68, 0.2);
+    color: #fca5a5;
   }
-
-  .month-display {
-    color: #f8fafc;
+  
+  .rsi-line.middle span {
+    background: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
   }
-
-  .record-card {
-    background: #1e293b;
-    border-color: #334155;
-  }
-
-  .record-date {
-    color: #cbd5e1;
-  }
-
-  .record-amount {
-    color: #60a5fa;
+  
+  .rsi-line.oversold span {
+    background: rgba(34, 197, 94, 0.2);
+    color: #86efac;
   }
 }
 
-/* Styling untuk navigasi bulan */
-.month-navigation {
+/* Mobile Optimization for RSI */
+@media (max-width: 768px) {
+  .sales-chart__rsi {
+    height: 100px;
+    margin-top: 0.5rem;
+  }
+
+  .rsi-line span {
+    font-size: 0.7rem;
+    padding: 1px 3px;
+  }
+}
+
+/* Fullscreen optimizations */
+.chart-fullscreen-active .sales-chart__trend-indicator {
+  position: fixed;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(8px);
+}
+
+.chart-fullscreen-active.dark .sales-chart__trend-indicator {
+  background: rgba(30, 41, 59, 0.98);
+}
+
+/* Chart controls enhancement */
+.sales-chart__controls {
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  width: 100%;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: rgba(249, 250, 251, 0.8);
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
 }
 
-.month-button {
+.sales-chart__btn {
   padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  background: white;
-  border: 1px solid #e2e8f0;
-  color: #475569;
+  border-radius: 8px;
   font-size: 0.875rem;
   font-weight: 500;
-  transition: all 0.2s;
-  white-space: nowrap;
+  transition: all 0.2s ease;
+  background: white;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-/* Responsif untuk mobile */
-@media (max-width: 768px) {
-  .month-navigation {
-    flex-wrap: wrap;
-    justify-content: center;
+.sales-chart__btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.sales-chart__btn.primary {
+  background: #2563eb;
+  color: white;
+  border-color: #1d4ed8;
+}
+
+.sales-chart__btn.primary:hover {
+  background: #1d4ed8;
+}
+
+/* Responsive control buttons */
+@media (max-width: 640px) {
+  .sales-chart__controls {
+    padding: 0.75rem;
     gap: 0.5rem;
   }
-
-  .month-button {
+  
+  .sales-chart__btn {
     padding: 0.375rem 0.75rem;
-    font-size: 0.75rem;
-    flex: 0 1 auto;
-    min-width: auto;
+    font-size: 0.8125rem;
   }
+}
 
-  select.month-select {
-    max-width: 120px;
-    font-size: 0.75rem;
-    padding: 0.375rem 0.5rem;
+/* Mobile optimization */
+@media (max-width: 768px) {
+  .sales-chart {
+    padding: 1rem;
+    border-radius: 8px;
   }
+  
+  .sales-chart__content {
+    height: 300px !important;
+    max-height: 300px !important;
+  }
+  
+  .sales-chart__rsi {
+    height: 100px !important;
+    margin-top: 0.5rem;
+  }
+  
+  .rsi-line span {
+    font-size: 0.7rem;
+    padding: 3px 6px;
+    right: 8px;
+  }
+}
 
-  .month-display {
-    font-size: 0.875rem;
+/* Chart content */
+.sales-chart__content {
+  position: relative;
+  width: 100%;
+  height: 400px;
+  transition: height 0.3s ease;
+}
+
+/* Main chart container */
+.chart-main {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transition: height 0.3s ease;
+  background: #ffffff;
+}
+
+/* Show/Hide RSI */
+.sales-chart__content.show-rsi .chart-main {
+  height: calc(100% - 170px);
+}
+
+.sales-chart__content:not(.show-rsi) .sales-chart__rsi {
+  display: none;
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  .sales-chart__rsi {
+    background: #1f2937;
+    border-color: #374151;
+  }
+  
+  .rsi-line span {
+    background: #374151;
+    color: #e5e7eb;
+  }
+  
+  .rsi-line.overbought span {
+    background: rgba(239, 68, 68, 0.2);
+    color: #fca5a5;
+  }
+  
+  .rsi-line.middle span {
+    background: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
+  }
+  
+  .rsi-line.oversold span {
+    background: rgba(34, 197, 94, 0.2);
+    color: #86efac;
+  }
+}
+
+/* RSI Button */
+.sales-chart__btn--icon.primary {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.sales-chart__btn--icon.secondary {
+  background-color: #e2e8f0;
+  color: #1f2937;
+}
+
+/* No Data State */
+.sales-chart__no-data {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #6b7280;
+}
+
+@media (max-width: 768px) {
+  .sales-chart__content.show-rsi {
+    height: 600px;
+    grid-template-rows: 65% 35%;
+  }
+}
+
+/* RSI Reference Lines */
+.rsi-reference-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  z-index: 1;
+}
+
+.rsi-reference-line.overbought {
+  top: 20%;
+  border-top: 1px dashed #ef4444;
+}
+
+.rsi-reference-line.middle {
+  top: 50%;
+  border-top: 1px dashed #9ca3af;
+}
+
+.rsi-reference-line.oversold {
+  top: 80%;
+  border-top: 1px dashed #22c55e;
+}
+
+/* RSI Labels */
+.rsi-label {
+  position: absolute;
+  right: 0.5rem;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.rsi-label.overbought {
+  top: calc(30% - 0.75rem);
+}
+
+.rsi-label.middle {
+  top: calc(50% - 0.75rem);
+}
+
+.rsi-label.oversold {
+  top: calc(70% - 0.75rem);
+}
+
+/* No data state */
+.chart-no-data {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #64748b;
+}
+
+/* Fullscreen mode */
+.chart-fullscreen-active {
+  background: #1e293b;
+  color: white;
+}
+
+.chart-fullscreen-active .toggle-btn {
+  border-color: #475569;
+  background: #334155;
+  color: #e2e8f0;
+}
+
+.chart-fullscreen-active .toggle-btn:hover {
+  background: #475569;
+}
+
+.chart-fullscreen-active .toggle-btn.active {
+  background: #64748b;
+  color: white;
+  border-color: #94a3b8;
+}
+
+/* Fullscreen Fixes */
+.sales-chart {
+  width: 100%;
+  height: auto;
+  position: relative;
+  transition: height 0.3s ease;
+}
+
+.chart-wrapper {
+  position: relative;
+  height: auto;
+  width: 100%;
+  margin-top: 0.5rem;
+  background: white;
+  border-radius: 0.75rem;
+  border: 1px solid #e2e8f0;
+  padding: 1rem;
+  overflow: hidden;
+  transition: height 0.3s ease, width 0.3s ease;
+}
+
+.chart-content {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: all 0.3s ease;
+}
+
+.chart-main {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+/* Fix untuk fullscreen dan exiting fullscreen */
+.chart-fullscreen-active .chart-wrapper {
+  height: 80vh !important;
+  width: 100% !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+}
+
+:fullscreen .chart-wrapper {
+  height: 80vh !important;
+  width: 100% !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+}
+
+:fullscreen .chart-main {
+  height: 100% !important;
+  width: 100% !important;
+}
+
+/* Transisi saat keluar dari fullscreen */
+.sales-chart:not(:fullscreen) .chart-wrapper {
+  animation: resizeToNormal 0.3s ease forwards;
+}
+
+@keyframes resizeToNormal {
+  from {
+    height: 80vh;
+  }
+  to {
+    height: 400px;
+  }
+}
+
+/* Menambahkan visual feedback saat panning */
+.chart-wrapper {
+  overflow: hidden;
+  border-radius: 8px;
+  position: relative;
+}
+
+/* Efek visual saat panning dan zooming */
+@keyframes fadeInOut {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 0.7; }
+}
+
+/* Indikator visual untuk gestur */
+.chart-wrapper::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 10px;
+  width: 24px;
+  height: 24px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='rgba(37, 99, 235, 0.8)' class='w-6 h-6'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M15.75 19.5L8.25 12l7.5-7.5' /%3E%3C/svg%3E");
+  background-size: contain;
+  transform: translateY(-50%);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.chart-wrapper::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  width: 24px;
+  height: 24px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='rgba(37, 99, 235, 0.8)' class='w-6 h-6'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M8.25 4.5l7.5 7.5-7.5 7.5' /%3E%3C/svg%3E");
+  background-size: contain;
+  transform: translateY(-50%);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Tampilkan indikator saat panning */
+.chart-wrapper.is-panning::before,
+.chart-wrapper.is-panning::after {
+  animation: none;
+  display: none;
+}
+
+/* Responsif di perangkat sentuh */
+@media (pointer: coarse) {
+  .chart-canvas {
+    touch-action: auto;
+  }
+  
+  .chart-wrapper {
+    touch-action: auto;
+  }
+  
+  /* Pastikan area chart cukup besar untuk interaksi sentuh */
+  .chart-main {
+    min-height: 250px;
+  }
+}
+
+/* Hilangkan zoom-controls karena sudah tidak digunakan */
+.zoom-controls {
+  display: none;
+}
+
+/* Tambahkan instruksi untuk pengguna */
+.chart-gesture-hint {
+  display: none !important;
+}
+
+/* Animasi untuk menunjukkan gesture */
+@keyframes gestureHint {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+  100% { transform: translateX(0); }
+}
+
+.chart-gesture-hint:after {
+  content: "⟷";
+  display: inline-block;
+  margin-left: 4px;
+  animation: gestureHint 2s infinite;
+}
+
+/* Perbaikan untuk sentuhan di perangkat mobile */
+.chart-canvas {
+  cursor: grab;
+  /* Agar area chart bisa scroll vertikal */
+  touch-action: pan-y !important;
+  transition: all 0.15s ease;
+  will-change: transform;
+}
+
+/* Khusus mobile */
+@media (pointer: coarse) {
+  .chart-canvas {
+    /* Izinkan touch gestures untuk panning dan pinch zoom */
+    touch-action: pan-y !important;
+  }
+  
+  .chart-wrapper {
+    /* Memastikan gestur touch hanya berlaku di chart */
+    touch-action: pan-y !important;
+  }
+  
+  /* Pastikan area chart cukup besar untuk interaksi sentuh */
+  .chart-main {
+    min-height: 280px !important;
+    touch-action: pan-y !important;
+  }
+  
+  /* Tambahkan padding di sisi chart untuk memudahkan sentuhan */
+  .chart-wrapper {
+    padding: 12px !important;
+  }
+  
+  /* Tambahkan indicator visual untuk touch */
+  .chart-wrapper::before,
+  .chart-wrapper::after {
+    width: 30px !important; /* Lebih lebar untuk mudah disentuh */
+    opacity: 0.2 !important; /* Selalu terlihat sedikit */
+  }
+  
+  /* Instruksi sentuh lebih besar */
+  .chart-gesture-hint {
+    font-size: 12px !important;
+    padding: 6px 10px !important;
+    opacity: 1 !important;
+  }
+}
+
+/* Tambahkan pseudo-element untuk memperluas area sentuh */
+.chart-wrapper::before,
+.chart-wrapper::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 20px;
+  height: 100%;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.chart-wrapper::before {
+  left: 0;
+  background: linear-gradient(to right, rgba(59, 130, 246, 0.1), transparent);
+}
+
+.chart-wrapper::after {
+  right: 0;
+  background: linear-gradient(to left, rgba(59, 130, 246, 0.1), transparent);
+}
+
+/* Optimasi untuk perangkat touch */
+.touch-enabled .chart-wrapper {
+    /* Agar area chart bisa scroll ke bawah di mobile dan desktop */
+    touch-action: pan-y !important;
+  transition: transform 0.1s ease-out !important;
+}
+
+.touch-enabled .chart-wrapper {
+  overflow: visible !important;
+  /* Agar area chart bisa scroll ke bawah di mobile dan desktop */
+  touch-action: pan-y !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Mencegah bouncing dan delay pada sentuhan */
+.touch-enabled {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Mengoptimalkan kecepatan render pada perangkat mobile */
+.chart-canvas {
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Sales chart container agar halaman bisa di-scroll */
+.sales-chart {
+  position: relative;
+  overflow: visible;
+  touch-action: auto;
+}
+
+/* Fix untuk container halaman agar bisa di-scroll */
+body, html {
+  touch-action: auto !important;
+  overflow: auto !important;
+}
+
+@media (max-width: 768px) {
+  /* Style untuk tombol fullscreen di mobile */
+  .toggle-btn[title="Fullscreen"],
+  .toggle-btn[title="Keluar Fullscreen"] {
+    aspect-ratio: 1;
+    min-width: unset;
+    width: 40px;
+    height: auto;
+    font-size: 1.2rem;
     padding: 0;
   }
 }
 
-/* Optimasi untuk layar sangat kecil */
-@media (max-width: 360px) {
-  .month-navigation {
-    gap: 0.25rem;
-  }
+/* Optimalisasi untuk tampilan chart yang lebih konsisten dan jelas */
+.chart-wrapper {
+  height: 380px;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
 
-  .month-button {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.7rem;
-  }
+.chart-canvas {
+  image-rendering: crisp-edges;
+  image-rendering: -webkit-optimize-contrast;
+}
 
-  select.month-select {
-    max-width: 100px;
-    font-size: 0.7rem;
-    padding: 0.25rem 0.375rem;
+/* Chart sizing untuk berbagai layar */
+@media (max-width: 768px) {
+  .chart-wrapper {
+    height: 340px;
+    padding: 0.6rem;
   }
 }
 
-/* Styling untuk navigasi bulan */
-.bg-white.rounded-lg.shadow-sm {
-  max-width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* Responsif untuk layar kecil */
-@media (max-width: 640px) {
-  .bg-white.rounded-lg.shadow-sm {
+@media (max-width: 480px) {
+  .chart-wrapper {
+    height: 300px;
     padding: 0.5rem;
   }
+}
+
+/* Pastikan konten chart tetap jelas di semua ukuran */
+.chart-main canvas {
+  image-rendering: auto;
+  transform-origin: center center;
+}
+
+/* Memperbaiki rotasi teks di sumbu X */
+.chart-wrapper canvas text {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  font-weight: 600 !important;
+  text-shadow: 0 0 1px rgba(255, 255, 255, 0.7) !important;
+}
+
+/* Memastikan label tidak terpotong */
+@media (max-width: 768px) {
+  .chart-wrapper {
+    padding-bottom: 80px !important;
+  }
   
-  select {
-    max-width: 150px;
+  .chart-canvas {
+    margin-bottom: 30px !important;
   }
 }
 
-/* Responsif untuk layar sangat kecil */
-@media (max-width: 360px) {
-  select {
-    max-width: 120px;
+@media (max-width: 480px) {
+  .chart-wrapper {
+    padding-bottom: 90px !important;
   }
+  
+  .chart-canvas {
+    margin-bottom: 40px !important;
+  }
+}
+
+/* Optimasi khusus untuk perangkat dengan layar tinggi */
+@media (min-height: 700px) and (max-width: 768px) {
+  .fullscreen-chart canvas {
+    margin-bottom: 180px !important;
+  }
+  
+  .fullscreen-chart .chart-wrapper {
+    padding-bottom: 220px;
+  }
+  
+  /* Tambahkan ruang ekstra di bawah chart untuk scroll */
+  .fullscreen-chart::after {
+    content: '';
+    display: block;
+    height: 100px;
+    width: 100%;
+  }
+}
+
+/* Style untuk fullscreen scrollable */
+.fullscreen-scrollable {
+  height: auto !important;
+  min-height: 100vh !important;
+  max-height: 100vh !important; /* Batasi tinggi maksimum */
+  width: 100vw !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  position: relative !important;
+  padding-bottom: 20px !important; /* Kurangi padding bawah */
+  background-color: #f8fafc !important; /* Tambahkan latar belakang */
+}
+
+.fullscreen-scrollable .chart-wrapper {
+  height: auto !important;
+  min-height: auto !important;
+  max-height: 90vh !important; /* Batasi tinggi maksimum */
+  overflow: visible !important;
+  padding-bottom: 30px !important; /* Kurangi padding bawah */
+  background-color: white !important; /* Pastikan latar belakang putih */
+  border-radius: 0.75rem !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+  margin-bottom: 0 !important; /* Hapus margin bawah */
+}
+
+.fullscreen-scrollable .chart-canvas {
+  margin-bottom: 20px !important; /* Kurangi margin bawah */
+}
+
+/* Hapus spacer karena tidak diperlukan lagi */
+.chart-fullscreen-spacer {
+  display: none !important;
+}
+
+/* Optimasi khusus untuk perangkat dengan layar pendek */
+@media (max-height: 600px) and (max-width: 768px) {
+  .fullscreen-chart canvas {
+    max-height: 30vh !important;
+    margin-bottom: 110px !important;
+  }
+}
+
+/* Optimasi khusus untuk Infinix Note 30 Pro */
+@media (min-height: 650px) and (max-height: 900px) and (min-width: 390px) and (max-width: 500px) {
+  .fullscreen-chart canvas {
+    max-height: 35vh !important;
+    margin-bottom: 200px !important;
+  }
+  
+  .fullscreen-chart .chart-wrapper {
+    padding-bottom: 250px;
+  }
+  
+  /* Tambahkan ruang ekstra di bawah chart untuk scroll */
+  .fullscreen-chart::after {
+    content: '';
+    display: block;
+    height: 150px;
+    width: 100%;
+  }
+}
+
+/* Pastikan label merah terlihat jelas */
+.chart-wrapper canvas text[fill="#ef4444"] {
+  font-weight: 700 !important;
+  text-shadow: 0 0 2px rgba(255, 255, 255, 0.8) !important;
 } 

@@ -71,6 +71,53 @@ export function PopupProvider({ children }: { children: ReactNode }) {
   )
 }
 
+/*
+INFORMASI PENTING:
+------------------
+File: PopupManager.tsx
+Fungsi: Manajemen popup dan notifikasi di seluruh aplikasi
+
+Fitur Penting:
+1. Context provider untuk popup
+2. Auto-close functionality
+3. Multiple popup types (info, success, warning, error)
+4. Custom styling untuk setiap tipe popup
+5. Sistem notifikasi global
+
+Catatan Update:
+- Jangan hapus type PopupType karena digunakan di seluruh aplikasi
+- AutoClose harus dipertahankan untuk UX yang baik
+- Selalu gunakan showPopup dari context untuk konsistensi
+- Jangan ubah struktur PopupData interface
+
+KETERKAITAN ANTAR FILE:
+----------------------
+1. src/components/ui/Popup.tsx
+   - Popup.tsx adalah komponen UI yang digunakan oleh PopupManager
+   - PopupManager mengatur state dan logika, Popup.tsx menangani tampilan
+   - Kedua file ini bekerja sama untuk menampilkan notifikasi
+
+2. src/components/ServiceWorkerRegistration.tsx
+   - ServiceWorkerRegistration menggunakan PopupManager untuk notifikasi update
+   - Menggunakan usePopup hook untuk menampilkan popup update
+   - Terkait dengan fitur update PWA
+
+3. src/components/AppProviders.tsx
+   - AppProviders mengimpor dan menggunakan PopupProvider
+   - PopupProvider membungkus seluruh aplikasi
+   - Memungkinkan akses ke popup dari mana saja di aplikasi
+
+4. src/app/sales/page.tsx, src/app/calculator/page.tsx, dll
+   - Hampir semua halaman menggunakan PopupManager
+   - Menggunakan usePopup hook untuk menampilkan notifikasi
+   - Terkait dengan UX dan feedback pengguna
+
+5. src/styles/globals.css
+   - Berisi styling untuk popup dan animasi
+   - Terkait dengan tampilan popup
+   - Menerapkan animasi dan transisi untuk popup
+*/
+
 // Contoh penggunaan:
 // 1. Bungkus aplikasi dengan PopupProvider di layout.tsx
 // 2. Gunakan usePopup() di komponen manapun untuk menampilkan popup

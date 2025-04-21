@@ -197,3 +197,79 @@ export default function SalesCalendar() {
     </div>
   )
 } 
+
+/*
+INFORMASI PENTING:
+------------------
+File: components/sales/SalesCalendar.tsx
+Fungsi: Komponen kalender untuk visualisasi data penjualan harian
+
+Fitur Penting:
+1. Navigasi dan pemilihan bulan
+2. Tampilan kalender dengan data penjualan
+3. Format currency Indonesia
+4. Loading state dan animasi
+5. Perhitungan hari dalam kalender
+6. Responsif untuk berbagai ukuran layar
+7. Optimasi performa dengan useCallback
+
+Catatan Update:
+- Jangan hapus fungsi getMonthName untuk lokalisasi
+- Pertahankan logika perhitungan kalender
+- Selalu gunakan formatCurrency untuk konsistensi
+- Jangan ubah struktur grid kalender
+- Pastikan loading state berfungsi
+- Pertahankan animasi loading
+
+KETERKAITAN ANTAR FILE:
+----------------------
+1. src/lib/db-helpers.ts
+   - Menyediakan fungsi getDailySalesTotal
+   - Mengatur query ke database
+   - Memformat data untuk kalender
+   - Penting untuk data penjualan
+
+2. src/app/sales/page.tsx
+   - Menggunakan komponen SalesCalendar
+   - Menyediakan context data
+   - Mengatur state global
+   - Mempengaruhi tampilan utama
+
+3. src/contexts/SalesContext.tsx
+   - Menyediakan data penjualan
+   - Mengatur state bulan aktif
+   - Mempengaruhi refresh data
+   - Terkait dengan navigasi bulan
+
+4. src/lib/supabase.ts
+   - Digunakan oleh db-helpers
+   - Mengatur koneksi database
+   - Mempengaruhi performa query
+   - Penting untuk data realtime
+
+5. src/styles/calendar.css
+   - Styling untuk grid kalender
+   - Mengatur tampilan responsif
+   - Animasi loading state
+   - Mempengaruhi UX komponen
+
+CATATAN TAMBAHAN:
+----------------
+1. Optimasi:
+   - Gunakan useMemo untuk perhitungan kalender
+   - Implementasi virtualisasi untuk performa
+   - Cache data bulan sebelumnya
+   - Batasi re-render komponen
+
+2. Aksesibilitas:
+   - Tambahkan aria-label untuk navigasi
+   - Pastikan kontras warna mencukupi
+   - Dukung navigasi keyboard
+   - Tambahkan screen reader text
+
+3. Internationalization:
+   - Gunakan format tanggal lokal
+   - Dukung multiple bahasa
+   - Format angka sesuai locale
+   - Terjemahkan teks UI
+*/ 

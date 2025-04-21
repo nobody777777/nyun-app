@@ -97,3 +97,50 @@ export default function IngredientCard({
     </div>
   )
 } 
+
+/*
+INFORMASI PENTING:
+------------------
+File: calculator/components/IngredientCard.tsx
+Fungsi: Komponen UI untuk menampilkan item bahan dengan interaksi
+
+Fitur Penting:
+1. Menampilkan detail bahan (nama, harga, unit, kategori)
+2. Interaksi increment dan reset quantity
+3. Styling dinamis berdasarkan kategori
+4. Animasi hover dan active state
+5. Badge quantity untuk item yang dipilih
+
+Catatan Update:
+- Jangan hapus getBorderColor karena penting untuk visual
+- Pertahankan struktur props interface
+- Selalu gunakan stopPropagation pada tombol reset
+- Jangan ubah styling kategori
+
+KETERKAITAN ANTAR FILE:
+----------------------
+1. src/app/calculator/page.tsx
+   - Digunakan sebagai komponen child
+   - Menerima props dari parent
+   - Terkait dengan state management
+
+2. src/app/calculator/data/ingredients.ts
+   - Data bahan digunakan untuk props
+   - Terkait dengan struktur data
+   - Mempengaruhi tampilan komponen
+
+3. src/styles/globals.css
+   - Menggunakan styling global
+   - Terkait dengan animasi dan transisi
+   - Mempengaruhi tampilan komponen
+
+4. src/components/ui/PopupManager.tsx
+   - Tidak langsung terkait
+   - Parent menggunakan popup untuk feedback
+   - Terkait dengan UX aplikasi
+
+5. src/app/calculator/lib/purchaseService.ts
+   - Tidak langsung terkait
+   - Parent menggunakan service untuk menyimpan data
+   - Terkait dengan persistensi data
+*/ 

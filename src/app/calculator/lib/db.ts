@@ -69,3 +69,50 @@ export const deleteAllRecords = async () => {
 
   if (error) throw error;
 }; 
+
+/*
+INFORMASI PENTING:
+------------------
+File: calculator/lib/db.ts
+Fungsi: Layanan database dasar untuk operasi CRUD pembelian
+
+Fitur Penting:
+1. Interface untuk tipe data PurchaseItem dan PurchaseRecord
+2. Fungsi saveRecord untuk menyimpan pembelian
+3. Fungsi getRecords untuk mengambil riwayat
+4. Fungsi deleteRecord untuk menghapus satu record
+5. Fungsi deleteAllRecords untuk menghapus semua record
+
+Catatan Update:
+- Jangan hapus interface karena digunakan di banyak tempat
+- Pertahankan struktur data untuk Supabase
+- Selalu gunakan error handling
+- Jangan ubah nama tabel 'purchase_records'
+
+KETERKAITAN ANTAR FILE:
+----------------------
+1. src/app/calculator/lib/purchaseService.ts
+   - Menggunakan interface yang sama
+   - Terkait dengan operasi database
+   - Mempengaruhi struktur data
+
+2. src/app/calculator/components/PurchaseHistory.tsx
+   - Menggunakan fungsi getRecords
+   - Terkait dengan pengambilan data
+   - Mempengaruhi tampilan riwayat
+
+3. src/app/calculator/page.tsx
+   - Menggunakan fungsi saveRecord
+   - Terkait dengan penyimpanan data
+   - Mempengaruhi fungsionalitas kalkulator
+
+4. src/lib/supabase.ts
+   - Menggunakan client Supabase
+   - Terkait dengan koneksi database
+   - Mempengaruhi operasi database
+
+5. src/app/calculator/data/ingredients.ts
+   - Data bahan digunakan untuk saveRecord
+   - Terkait dengan struktur data
+   - Mempengaruhi penyimpanan data
+*/ 

@@ -246,3 +246,50 @@ export default function CalculatorPage() {
     </div>
   )
 } 
+
+/*
+INFORMASI PENTING:
+------------------
+File: calculator/page.tsx
+Fungsi: Halaman utama kalkulator bahan untuk menghitung total pembelian
+
+Fitur Penting:
+1. Menampilkan daftar bahan dengan filter kategori
+2. Menghitung total pembelian secara real-time
+3. Menyimpan catatan pembelian ke database
+4. Reset dan reset semua item
+5. Integrasi dengan popup untuk notifikasi
+
+Catatan Update:
+- Jangan hapus state quantities karena penting untuk tracking item
+- Pertahankan fungsi calculateTotal untuk perhitungan real-time
+- Selalu gunakan showPopup untuk feedback pengguna
+- Jangan ubah struktur filter kategori
+
+KETERKAITAN ANTAR FILE:
+----------------------
+1. src/app/calculator/components/IngredientCard.tsx
+   - Digunakan untuk menampilkan setiap item bahan
+   - Menerima props quantity, onIncrement, dan onReset
+   - Terkait dengan UI dan interaksi pengguna
+
+2. src/app/calculator/data/ingredients.ts
+   - Menyediakan data bahan untuk kalkulator
+   - Digunakan untuk filtering dan perhitungan
+   - Terkait dengan data master aplikasi
+
+3. src/app/calculator/lib/purchaseService.ts
+   - Digunakan untuk menyimpan catatan pembelian
+   - Menangani interaksi dengan database
+   - Terkait dengan persistensi data
+
+4. src/components/ui/PopupManager.tsx
+   - Digunakan untuk menampilkan notifikasi
+   - Menangani feedback untuk pengguna
+   - Terkait dengan UX aplikasi
+
+5. src/app/calculator/history/page.tsx
+   - Halaman terpisah untuk melihat riwayat pembelian
+   - Terhubung melalui tombol "Lihat Riwayat"
+   - Terkait dengan fitur riwayat pembelian
+*/ 

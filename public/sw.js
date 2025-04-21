@@ -1,6 +1,6 @@
 // Nama cache
 const CACHE_NAME = 'roti-barok-v1.1.0';
-const APP_VERSION = '1.1.0';
+const APP_VERSION = '1.2.0';
 
 // File yang akan di-cache
 const urlsToCache = [
@@ -177,3 +177,49 @@ async function syncData() {
   // Implementasi sinkronisasi data di sini
   console.log('Sinkronisasi data di background');
 }
+
+/*
+INFORMASI PENTING:
+------------------
+File: sw.js (Service Worker)
+Fungsi: Menangani caching dan update PWA
+
+Fitur Penting:
+1. Cache management untuk assets statis
+2. Strategi cache-first untuk performa
+3. Auto-update detection
+4. Version control untuk PWA
+
+Catatan Update:
+- Jangan hapus CACHE_NAME karena digunakan untuk versioning
+- Selalu update APP_VERSION saat deploy versi baru
+- Cache strategy harus dipertahankan untuk performa
+- Jangan hapus event listener 'activate' karena penting untuk update
+
+KETERKAITAN ANTAR FILE:
+----------------------
+1. src/components/ServiceWorkerRegistration.tsx
+   - Service worker ini didaftarkan oleh ServiceWorkerRegistration.tsx
+   - ServiceWorkerRegistration.tsx menangani notifikasi update
+   - Kedua file ini bekerja sama untuk update PWA
+
+2. src/app/layout.tsx
+   - Layout.tsx juga mendaftarkan service worker ini sebagai backup
+   - Terhubung melalui script tag di layout.tsx
+   - Memastikan service worker terdaftar bahkan jika ServiceWorkerRegistration gagal
+
+3. public/manifest.json
+   - Service worker dan manifest.json bekerja sama untuk PWA
+   - Manifest.json mendefinisikan metadata PWA
+   - Service worker menangani caching dan update
+
+4. src/app/next.config.js
+   - Konfigurasi Next.js untuk PWA
+   - Mengatur workbox dan service worker
+   - Terkait dengan cara service worker di-generate
+
+5. public/icon-*.png
+   - Icon-icon yang di-cache oleh service worker
+   - Digunakan untuk PWA dan instalasi
+   - Terkait dengan manifest.json dan PWA functionality
+*/

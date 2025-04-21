@@ -144,3 +144,85 @@ export default function SalesForm() {
     </form>
   )
 } 
+
+/*
+INFORMASI PENTING:
+------------------
+File: components/sales/SalesForm.tsx
+Fungsi: Komponen form untuk input data penjualan dengan dynamic items
+
+Fitur Penting:
+1. Dynamic form items (tambah/hapus item)
+2. Validasi input dan perhitungan otomatis
+3. Handling multiple async operations
+4. State management untuk form
+5. Loading state saat submit
+6. Format tanggal Indonesia
+7. Perhitungan total roti dan omset
+
+Catatan Update:
+- Jangan hapus perhitungan totalBread
+- Pertahankan urutan operasi database
+- Selalu gunakan error handling
+- Jangan ubah struktur form items
+- Pastikan validasi berjalan
+- Pertahankan refresh after submit
+
+KETERKAITAN ANTAR FILE:
+----------------------
+1. src/lib/db-helpers.ts
+   - Menggunakan createSale
+   - Menggunakan addSaleItems
+   - Menggunakan updateDailySales
+   - Penting untuk operasi database
+
+2. src/app/sales/page.tsx
+   - Parent component
+   - Menerima hasil submit
+   - Menangani refresh data
+   - Mempengaruhi state global
+
+3. src/contexts/SalesContext.tsx
+   - Tidak langsung terkait
+   - Mempengaruhi refresh data
+   - Terkait dengan update grafik
+   - Penting untuk sinkronisasi
+
+4. src/components/sales/SalesCalendar.tsx
+   - Terkait dengan update data
+   - Menerima hasil input form
+   - Mempengaruhi tampilan kalender
+   - Refresh setelah submit
+
+5. src/types/database.ts
+   - Definisi tipe Sale
+   - Definisi tipe SaleItem
+   - Memastikan type safety
+   - Penting untuk validasi
+
+CATATAN TEKNIS:
+--------------
+1. Validasi:
+   - Cek nama item tidak kosong
+   - Cek quantity > 0
+   - Cek price >= 0
+   - Validasi format tanggal
+
+2. Error Handling:
+   - Tangani kegagalan network
+   - Tangani error database
+   - Rollback jika gagal
+   - Feedback ke user
+
+3. Optimasi:
+   - Batasi re-render items
+   - Gunakan useCallback
+   - Optimasi perhitungan total
+   - Cache input values
+
+4. UX Improvements:
+   - Tambah konfirmasi submit
+   - Tambah preview total
+   - Tambah validasi real-time
+   - Improved error messages
+*/ 

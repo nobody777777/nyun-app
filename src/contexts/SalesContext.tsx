@@ -127,3 +127,50 @@ export function useSales() {
   }
   return context
 }
+
+/*
+INFORMASI PENTING:
+------------------
+File: contexts/SalesContext.tsx
+Fungsi: Context provider untuk manajemen state global penjualan
+
+Fitur Penting:
+1. State management untuk data penjualan
+2. Auto-refresh data penjualan
+3. Filter data berdasarkan bulan
+4. Loading state management
+5. Error handling global
+
+Catatan Update:
+- Jangan hapus fungsi refreshData
+- Pertahankan struktur context
+- Selalu gunakan error handling
+- Jangan ubah format data
+
+KETERKAITAN ANTAR FILE:
+----------------------
+1. src/app/sales/page.tsx
+   - Menggunakan context untuk data
+   - Terkait dengan input penjualan
+   - Mempengaruhi state global
+
+2. src/app/dashboard/page.tsx
+   - Menggunakan context untuk ringkasan
+   - Terkait dengan tampilan data
+   - Mempengaruhi visualisasi
+
+3. src/components/charts/SalesChart.tsx
+   - Menggunakan data untuk grafik
+   - Terkait dengan visualisasi
+   - Mempengaruhi tampilan statistik
+
+4. src/lib/supabase.ts
+   - Digunakan untuk fetch data
+   - Terkait dengan database
+   - Mempengaruhi state global
+
+5. src/app/calculator/page.tsx
+   - Tidak langsung terkait
+   - Mempengaruhi data penjualan
+   - Terkait dengan perhitungan
+*/
