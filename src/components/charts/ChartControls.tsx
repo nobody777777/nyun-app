@@ -1,3 +1,5 @@
+'use client'
+
 interface ChartControlsProps {
   activeDataset: string[]
   setActiveDataset: (dataset: string[]) => void
