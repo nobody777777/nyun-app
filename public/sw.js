@@ -78,6 +78,11 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Jika request ke manifest.json, jangan intercept/caching, biarkan browser handle default
+  if (url.pathname.endsWith('/manifest.json')) {
+    return;
+  }
+
   // Cek apakah request adalah untuk data dinamis
   const isDynamicRequest = dynamicCacheUrls.some(dynamicUrl => 
     url.pathname.includes(dynamicUrl) || url.pathname.endsWith('/api/')
