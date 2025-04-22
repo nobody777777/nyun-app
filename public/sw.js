@@ -1,5 +1,5 @@
 // Nama cache
-const CACHE_NAME = 'roti-barok-v1.1.0';
+const CACHE_NAME = 'roti-barok-v1.2.0';
 const APP_VERSION = '1.2.0';
 
 // File yang akan di-cache

@@ -1,3 +1,3 @@
 git add .
-git commit -m "ngising"
-git push
+git commit -m "modol"
+git push origin main

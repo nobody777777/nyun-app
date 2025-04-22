@@ -26,8 +26,6 @@ import { useSMA, useEMA } from '@/hooks/useIndicators'
 import { useRSI } from '@/hooks/useRSI'
 import { usePrediction, createHuggingFaceConfig } from '@/hooks/usePrediction'
 import type { HuggingFaceConfig, PredictionResult } from '@/hooks/usePrediction'
-import annotationPlugin from 'chartjs-plugin-annotation'
-// import zoomPlugin from 'chartjs-plugin-zoom'
 import { debounce } from 'lodash'
 import { toast } from "react-hot-toast"
 
@@ -42,7 +40,6 @@ ChartJS.register(
   Legend,
   Filler,
   TimeScale,
-  annotationPlugin
 )
 
 
@@ -566,9 +563,6 @@ export default function SalesChart() {
         displayColors: true,
         filter: (tooltipItem) => true
       },
-      annotation: {
-        annotations: {}
-      }
     },
     onClick: (event, elements) => {
       // Jika sudah ada tooltip aktif, tutup saja
