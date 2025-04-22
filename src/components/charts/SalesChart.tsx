@@ -265,50 +265,42 @@ export default function SalesChart() {
   }, [currentMonth]);
 
   const fetchChartData = useCallback(async () => {
-  try {
-    setLoading(true)
-    let data: any[] | null = null, error: any = null
     try {
-      const { data: supaData, error: supaError } = await supabase
+      setLoading(true)
+      
+      const { data, error } = await supabase
         .from('daily_sales')
         .select('*')
         .order('date', { ascending: true })
-      data = supaData
-      error = supaError
-    } catch (err) {
-      error = err
-      data = null
-    }
-    if (error) {
-      console.error('Error fetching data:', error)
-      setChartData({ dailyData: [], stats: null })
-      setLoading(false)
-      return
-    }
-    if (!Array.isArray(data) || data.length === 0) {
-      setChartData({ dailyData: [], stats: null })
-      setLoading(false)
-      return
-    }
-    const processedData = data.map(item => ({
-      date: item.date,
-      total_bread: typeof item.total_bread === 'number' ? item.total_bread : 0,
-      total_sales: typeof item.total_sales === 'number' ? item.total_sales : 0
-    }))
-    setChartData({
-      dailyData: processedData,
-      stats: {
-        totalBread: processedData.reduce((sum, item) => sum + item.total_bread, 0),
-        totalSales: processedData.reduce((sum, item) => sum + item.total_sales, 0)
+
+      if (error) throw error
+      
+      if (!data || data.length === 0) {
+        setChartData({ dailyData: [], stats: null })
+        setLoading(false)
+        return
       }
-    })
-    setLoading(false)
-  } catch (error) {
-    console.error('Error fetching data:', error)
-    setChartData({ dailyData: [], stats: null })
-    setLoading(false)
-  }
-}, [])
+      
+      const processedData = data.map(item => ({
+        date: item.date,
+        total_bread: item.total_bread || 0,
+        total_sales: item.total_sales || 0
+      }))
+
+      setChartData({
+        dailyData: processedData,
+        stats: {
+          totalBread: processedData.reduce((sum, item) => sum + item.total_bread, 0),
+          totalSales: processedData.reduce((sum, item) => sum + item.total_sales, 0)
+        }
+      })
+
+      setLoading(false)
+    } catch (error) {
+      console.error('Error fetching data:', error)
+      setLoading(false)
+    }
+  }, [])
 
   useEffect(() => {
     if (isMounted) {
@@ -426,20 +418,27 @@ export default function SalesChart() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [closeTooltip]);
 
-  const safeDailyData = Array.isArray(chartData.dailyData) ? chartData.dailyData : [];
-const mainChartData = {
-  labels: safeDailyData.map((item: any) => {
-    const dateStr = item.date && typeof item.date === 'string' && item.date.includes('T') ? item.date : `${item.date || ''}T00:00:00+07:00`;
-    const date = new Date(dateStr);
-    if (!isNaN(date.getTime())) date.setDate(date.getDate() + 1);
-    const bulan = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des'];
-    const tahun = date.getFullYear().toString().slice(-2);
-    return `${date.getDate()}-${bulan[date.getMonth()]} '${tahun}`;
-  }),
-  datasets: [
+  const mainChartData = {
+    labels: chartData.dailyData.map((item: any) => {
+      // Konversi ke zona waktu Jakarta/Indonesia (UTC+7)
+      const dateStr = item.date.includes('T') ? item.date : `${item.date}T00:00:00+07:00`;
+      
+      // PENTING: Tambahkan 1 hari ke tanggal untuk menyesuaikan dengan tampilan di halaman penjualan
+      // Karena di halaman penjualan, tanggal disimpan sebagai H-1 dan ditampilkan dengan +1 hari
+      const date = new Date(dateStr);
+      date.setDate(date.getDate() + 1); // Tambahkan 1 hari
+      
+      const bulan = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des'];
+      // Gunakan 2 digit terakhir untuk tahun (contoh: 2025 -> 25)
+      const tahun = date.getFullYear().toString().slice(-2);
+      
+      // Format yang lebih ringkas: "15-Apr'24" (tanggal sesuai dengan halaman penjualan)
+      return `${date.getDate()}-${bulan[date.getMonth()]} '${tahun}`;
+    }),
+    datasets: [
       {
         label: 'Roti Terjual',
-        data: safeDailyData.map((item: any) => typeof item.total_bread === 'number' ? item.total_bread : 0),
+        data: chartData.dailyData.map((item: any) => item.total_bread),
         borderColor: 'rgb(59, 130, 246)',
         backgroundColor: 'rgba(59, 130, 246, 0.15)',
         borderWidth: 2,
@@ -455,7 +454,7 @@ const mainChartData = {
       },
       {
         label: 'Omset',
-        data: safeDailyData.map((item: any) => typeof item.total_sales === 'number' ? item.total_sales / 1000 : 0),
+        data: chartData.dailyData.map((item: any) => item.total_sales / 1000),
         borderColor: 'rgb(34, 197, 94)',
         backgroundColor: 'rgba(34, 197, 94, 0.15)',
         borderWidth: 2,

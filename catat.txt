@@ -1,3 +1,3 @@
 git add .
-git commit -m "fix: perbaiki logika chart agar selalu tampil dan tidak error build"
-git push origin main
+git commit -m "cape"
+git push
