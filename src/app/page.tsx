@@ -45,7 +45,7 @@ export default function HomePage() {
         .from('daily_sales')
         .select('total_bread, total_sales')
         .eq('date', today)
-        .single()
+        .maybeSingle()
 
       if (error && error.code !== 'PGRST116') { // PGRST116 adalah kode untuk "no rows returned"
         console.error('Error mengambil statistik:', error)

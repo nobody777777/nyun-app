@@ -1,3 +1,3 @@
 git add .
-git commit -m "Update kode sikit jee"
+git commit -m "Update kode saenel jee"
 git push
