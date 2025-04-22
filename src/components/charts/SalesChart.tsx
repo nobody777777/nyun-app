@@ -745,7 +745,10 @@ export default function SalesChart() {
   }
 
   return (
-    <div ref={chartContainerRef} className="sales-chart">
+    <div
+      ref={chartContainerRef}
+      className={`sales-chart${isFullscreen ? ' fullscreen-scrollable' : ''}`}
+    >
       <ChartControls
         activeDataset={activeDataset}
         setActiveDataset={setActiveDataset}
@@ -780,8 +783,10 @@ export default function SalesChart() {
       )}
       
       <div className="relative flex-grow chart-main">
+        {/* Spacer bawah hanya jika bukan fullscreen */}
+        {!isFullscreen && <div style={{ height: 24 }} />}
         <div 
-          className="chart-wrapper w-full h-full relative"
+          className={`chart-wrapper w-full h-full relative${isFullscreen ? ' fullscreen-chart' : ''}`}
         >
           {loading ? (
             <div className="absolute inset-0 flex items-center justify-center">
