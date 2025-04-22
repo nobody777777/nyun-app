@@ -72,7 +72,12 @@ self.addEventListener('fetch', (event) => {
   }
 
   const url = new URL(event.request.url);
-  
+
+  // Jika request ke Supabase, jangan intercept/caching, biarkan browser handle default
+  if (url.hostname.endsWith('supabase.co')) {
+    return;
+  }
+
   // Cek apakah request adalah untuk data dinamis
   const isDynamicRequest = dynamicCacheUrls.some(dynamicUrl => 
     url.pathname.includes(dynamicUrl) || url.pathname.endsWith('/api/')
