@@ -23,7 +23,7 @@ export default function SalesCalendar() {
 
   // Fungsi untuk mendapatkan daftar bulan yang bisa dipilih (bulan saat ini dan sebelumnya)
   const getAvailableMonths = () => {
-    const months = []
+    const months: { value: string; label: string }[] = []
     const today = new Date()
     const currentYear = today.getFullYear()
     const currentMonth = today.getMonth()
@@ -111,7 +111,7 @@ export default function SalesCalendar() {
   const renderCalendar = () => {
     const daysInMonth = getDaysInMonth(currentMonth.getFullYear(), currentMonth.getMonth())
     const firstDay = getFirstDayOfMonth(currentMonth.getFullYear(), currentMonth.getMonth())
-    const days = []
+    const days: JSX.Element[] = []
 
     // Tambahkan sel kosong untuk hari-hari sebelum hari pertama bulan
     for (let i = 0; i < firstDay; i++) {

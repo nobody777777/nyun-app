@@ -25,6 +25,7 @@ import { RSIChart } from './RSIChart'
 import { useSMA, useEMA } from '@/hooks/useIndicators'
 import { useRSI } from '@/hooks/useRSI'
 import { usePrediction, createHuggingFaceConfig } from '@/hooks/usePrediction'
+import type { HuggingFaceConfig, PredictionResult } from '@/hooks/usePrediction'
 import annotationPlugin from 'chartjs-plugin-annotation'
 // import zoomPlugin from 'chartjs-plugin-zoom'
 import { debounce } from 'lodash'
@@ -44,21 +45,6 @@ ChartJS.register(
   annotationPlugin
 )
 
-// Perbaiki interface Screen
-interface ExtendedScreen extends Screen {
-  orientation?: {
-    lock?: (orientation: string) => Promise<void>;
-    type?: string;
-  };
-}
-
-interface ExtendedScreenOrientation {
-  lock(orientation: 'landscape' | 'portrait'): Promise<void>;
-  unlock(): Promise<void>;
-  type: string;
-}
-
-declare const screen: ExtendedScreen & { orientation: ExtendedScreenOrientation };
 
 type TimeRange = '7d' | '14d' | '30d' | '60d'
 
@@ -97,7 +83,7 @@ export default function SalesChart() {
   const [prediction, setPrediction] = useState<PredictionResult | null>(null);
   const [predictionLoading, setPredictionLoading] = useState(false);
   const [predictionError, setPredictionError] = useState<string | null>(null);
-  const huggingFaceConfig = createHuggingFaceConfig(
+  const huggingFaceConfig: HuggingFaceConfig = createHuggingFaceConfig(
     process.env.NEXT_PUBLIC_HUGGINGFACE_API_KEY || process.env.NEXT_PUBLIC_HF_API_KEY || '',
     'facebook/bart-large-cnn'
   );
@@ -119,7 +105,7 @@ export default function SalesChart() {
           reasoning: result.reasoning.join('; '),
           percent_change: result.percentChange,
           created_at: new Date().toISOString()
-        }, { onConflict: ['date'] });
+        } as any, { onConflict: 'date' });
       if (error) throw error;
       toast.success('Prediksi berhasil disimpan ke database!');
     } catch (err) {
@@ -245,6 +231,7 @@ export default function SalesChart() {
       setPrediction(null);
       setPredictionLoading(false);
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showPrediction, chartData.dailyData, huggingFaceConfig, emaPeriod, smaPeriod, dailyPredictions]);
 
   useEffect(() => {
@@ -358,7 +345,7 @@ export default function SalesChart() {
           // Cek apakah device mendukung screen orientation
           if ('orientation' in screen && 'lock' in screen.orientation) {
             try {
-              await screen.orientation.lock('landscape')
+              await (screen.orientation as any).lock('landscape')
             } catch (err) {
               console.log('Orientasi tidak dapat dikunci:', err)
             }
@@ -553,42 +540,6 @@ export default function SalesChart() {
       legend: {
         display: false
       },
-      zoom: {
-        pan: {
-          enabled: true,
-          mode: 'x',
-          threshold: 5, // Nilai sederhana
-          modifierKey: null,
-          onPanStart: function(e) {
-            // Hanya tangkap event pan horizontal
-            if (Math.abs(e.delta.x) > Math.abs(e.delta.y)) {
-              return true;
-            }
-            return false; // Batalkan event untuk memungkinkan scroll halaman
-          }
-        },
-        zoom: {
-          wheel: {
-            enabled: true,
-            speed: 0.15, // Kecepatan yang lebih natural
-            modifierKey: 'shift', // Zoom hanya dengan shift+wheel untuk memungkinkan scrolling
-          },
-          pinch: {
-            enabled: true,
-            speed: 0.1, // Kecepataan yang lebih natural
-          },
-          drag: {
-            enabled: false, // Nonaktifkan drag zoom karena conflict dengan pan
-          },
-          mode: 'x',
-        },
-        limits: {
-          x: {
-            minRange: 2, // Minimal bisa zoom sampai 2 data point
-            // Hapus min/max fixed value agar behavior default
-          }
-        }
-      } as any,
       tooltip: {
         enabled: true,
         intersect: false,
@@ -613,17 +564,10 @@ export default function SalesChart() {
         bodySpacing: 6,
         caretSize: 6,
         displayColors: true,
-        filter: (tooltipItem) => true,
-        events: ['mousemove', 'mouseout', 'click', 'touchstart', 'touchmove'],
-        external: (context) => {
-          setActiveTooltip(context.tooltip.opacity > 0);
-          if (context.tooltip.opacity === 0) {
-            setActiveTooltipIndex(null);
-          }
-        }
+        filter: (tooltipItem) => true
       }
     },
-    onClick: (event, elements) => {
+  onClick: (event, elements) => {
       // Jika sudah ada tooltip aktif, tutup saja
       if (activeTooltip) {
         closeTooltip();

@@ -1,4 +1,4 @@
-type PredictionResult = {
+export type PredictionResult = {
   predictionValue: number;
   confidence: number;
   trendDirection: 'up' | 'down' | 'sideways';
@@ -7,7 +7,7 @@ type PredictionResult = {
   percentChange: number;
 }
 
-interface HuggingFaceConfig {
+export interface HuggingFaceConfig {
   apiKey: string;
   modelId: string;
   url?: string;

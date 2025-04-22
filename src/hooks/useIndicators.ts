@@ -62,11 +62,11 @@ export function useEMA(data: number[], period: number): number[] {
 }
 
 // Fungsi untuk menghitung RSI (Relative Strength Index)
-export function useRSI(data: number[], period: number = 14): number[] {
+export function useRSI(data: number[], period: number = 14): (number | null)[] {
   return useMemo(() => {
     if (!data || data.length === 0) return []
 
-    const rsi: number[] = []
+    const rsi: (number | null)[] = []
     const gains: number[] = []
     const losses: number[] = []
 

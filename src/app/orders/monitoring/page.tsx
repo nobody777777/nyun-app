@@ -3,8 +3,28 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 
+interface OrderItem {
+  id: string;
+  menu_item_id: string;
+  menu_item_name: string;
+  quantity: number;
+  price: number;
+  subtotal: number;
+}
+
+interface Order {
+  id: string;
+  customer_name: string;
+  created_at: string;
+  total_amount: number;
+  status: string;
+  notes?: string;
+  order_items: OrderItem[];
+  completed_at?: string;
+}
+
 export default function OrderMonitoringPage() {
-  const [orders, setOrders] = useState([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Ambil pesanan yang belum selesai dan setup realtime subscription

@@ -23,7 +23,7 @@ export const useRSI = (data: number[], period: number = 14, maxScale: number = 5
     let avgGain = gains.slice(0, period).reduce((sum, gain) => sum + gain, 0) / period
     let avgLoss = losses.slice(0, period).reduce((sum, loss) => sum + loss, 0) / period
 
-    const rsi = []
+    const rsi: (number | null)[] = []
     // Tambahkan null untuk data sebelum periode pertama
     for (let i = 0; i < period; i++) {
       rsi.push(null)
