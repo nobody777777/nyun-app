@@ -565,9 +565,12 @@ export default function SalesChart() {
         caretSize: 6,
         displayColors: true,
         filter: (tooltipItem) => true
+      },
+      annotation: {
+        annotations: {}
       }
     },
-  onClick: (event, elements) => {
+    onClick: (event, elements) => {
       // Jika sudah ada tooltip aktif, tutup saja
       if (activeTooltip) {
         closeTooltip();
