@@ -56,8 +56,8 @@ const formatTanggal = (tanggal: string) => {
   const date = new Date(dateStr);
   const hari = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
   const bulan = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des'];
-  
-  return `${hari[date.getDay()]}, ${date.getDate()} ${bulan[date.getMonth()]} ${date.getFullYear()}`;
+  const tahun = date.getFullYear().toString().slice(-2);
+  return `${hari[date.getDay()]}, ${date.getDate()}-${bulan[date.getMonth()]} \'${tahun}`;
 };
 
 // Definisi fungsi-fungsi di luar komponen SalesChart untuk menghindari masalah reference
@@ -91,6 +91,7 @@ export default function SalesChart() {
   // Tambahkan state untuk tooltip
   const [activeTooltipIndex, setActiveTooltipIndex] = useState<number | null>(null);
   const [activeTooltip, setActiveTooltip] = useState(false);
+  const [tooltipEnabled, setTooltipEnabled] = useState(true);
   const huggingFaceConfig: HuggingFaceConfig = createHuggingFaceConfig(
     process.env.NEXT_PUBLIC_HUGGINGFACE_API_KEY || process.env.NEXT_PUBLIC_HF_API_KEY || '',
     'facebook/bart-large-cnn'
@@ -654,7 +655,7 @@ export default function SalesChart() {
             const spacerElem = document.createElement('div')
             spacerElem.className = 'chart-fullscreen-date-spacer'
             spacerElem.style.height = '40px' // Hanya cukup untuk tanggal
-            spacerElem.style.marginTop = '10px' // Tambahkan sedikit margin atas
+            spacerElem.style.marginTop = '200px' // Tambahkan sedikit margin atas
             chartContainerRef.current.appendChild(spacerElem)
           }
         }
@@ -717,12 +718,21 @@ export default function SalesChart() {
     }
   }, []);
   
+  // Toggle tooltip status sudah dihapus karena tidak memerlukan tombol
+  
   // Fungsi untuk menangani klik di luar area chart
   const handleClickOutside = useCallback((event: MouseEvent) => {
-    if (chartContainerRef?.current && !chartContainerRef.current.contains(event.target as Node)) {
+    if (tooltipEnabled && chartContainerRef?.current && !chartContainerRef.current.contains(event.target as Node)) {
       closeTooltip();
     }
-  }, [closeTooltip, chartContainerRef]);
+  }, [closeTooltip, chartContainerRef, tooltipEnabled]);
+  
+  // Tangani klik di dalam chart untuk menutup tooltip (tambahan untuk memastikan tooltip menutup dengan baik)
+  const handleChartClick = useCallback(() => {
+    if (tooltipEnabled && chartRef?.current?.chart) {
+      closeTooltip();
+    }
+  }, [closeTooltip, tooltipEnabled]);
 
   // Effect untuk tooltip handling dan click outside detection
   useEffect(() => {
@@ -940,7 +950,7 @@ export default function SalesChart() {
         display: false
       },
       tooltip: {
-        enabled: true,
+        enabled: tooltipEnabled,
         intersect: false,
         position: 'nearest',
         mode: 'index',
@@ -966,21 +976,24 @@ export default function SalesChart() {
       }
     },
     onClick: (event, elements) => {
-      // Jika tidak ada elemen yang diklik, tutup tooltip
-      if (elements.length === 0) {
-        if (chartRef?.current?.chart) {
-          chartRef.current.chart.setActiveElements([]);
-          chartRef.current.chart.tooltip.setActiveElements([], { x: 0, y: 0 });
-          chartRef.current.chart.update('none');
-        }
-      } else {
-        // Jika ada elemen yang diklik, tampilkan tooltip
+      // Jika tooltip dinonaktifkan, jangan lakukan apa-apa
+      if (!tooltipEnabled) return;
+        
+      // Selalu tutup tooltip saat mengklik chart area, baik pada elemen atau area kosong
+      // Ini memecahkan masalah tooltip yang terus aktif
+      closeTooltip();
+        
+      // Hanya tampilkan tooltip baru jika klik pada elemen data
+      if (elements.length > 0) {
+        // Jika ada elemen yang diklik, tampilkan tooltip baru
         const idx = elements[0].index;
-        // Perbarui tampilan tooltip melalui Chart.js API langsung
-        if (chartRef?.current?.chart) {
-          chartRef.current.chart.tooltip.setActiveElements([{datasetIndex: 0, index: idx}], {x: 0, y: 0});
-          chartRef.current.chart.update('none');
-        }
+        // Tunggu sebentar agar tooltip sebelumnya benar-benar tertutup
+        setTimeout(() => {
+          if (chartRef?.current?.chart) {
+            chartRef.current.chart.tooltip.setActiveElements([{datasetIndex: 0, index: idx}], {x: 0, y: 0});
+            chartRef.current.chart.update('none');
+          }
+        }, 50);
       }
     },
     elements: {
@@ -994,7 +1007,14 @@ export default function SalesChart() {
     <div
       ref={chartContainerRef}
       className={`sales-chart w-full h-full${isFullscreen ? ' fullscreen-scrollable' : ''}`}
-      style={isFullscreen ? { backgroundColor: '#ffffff', maxHeight: '100vh' } : undefined}
+      style={isFullscreen ? { 
+        backgroundColor: '#ffffff', 
+        height: 'auto', 
+        minHeight: '100vh',
+        overflowY: 'auto',
+        display: 'flex',
+        flexDirection: 'column'
+      } : undefined}
     >
       <div className="chart-controls-wrapper">
         <ChartControls
@@ -1017,7 +1037,7 @@ export default function SalesChart() {
         {/* Tambahkan kontrol untuk rentang waktu */}
         <div className="time-range-controls mb-3 px-2">
           <div className="flex items-center space-x-2 flex-wrap">
-            <div className="flex space-x-2">
+            <div className="flex flex-wrap items-center space-x-2">
               <button
                 onClick={() => {
                   setTimeRange('30d');
@@ -1042,6 +1062,7 @@ export default function SalesChart() {
               >
                 Kustom
               </button>
+              {/* Tombol tooltip telah dihapus sesuai permintaan */}
             </div>
             
             {timeRange === 'custom' && (
@@ -1082,28 +1103,29 @@ export default function SalesChart() {
           </div>
         </div>
       </div>
-      {/* Tombol prediksi LLM */}
-      <button
-        onClick={handlePredictionClick}
-        className={`mt-2 px-4 py-2 rounded bg-blue-600 text-white flex items-center gap-2 ${predictionLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-        disabled={predictionLoading}
-      >
-        {predictionLoading ? (
-          <span className="animate-spin mr-2 h-5 w-5 border-b-2 border-white rounded-full inline-block"></span>
-        ) : (
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 20.5A8.5 8.5 0 103.5 12a8.5 8.5 0 008.5 8.5z" /></svg>
-        )}
-        Prediksi LLM
-      </button>      
+      {/* Tombol prediksi LLM telah dihapus sesuai permintaan */}
       {predictionError && (
         <p className="text-red-600 mt-2">Error: {predictionError}</p>
       )}
       
-      <div className="relative flex-grow chart-main">
+      <div className="relative chart-main" style={{
+          flexGrow: 1,
+          width: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'visible'
+        }}>
         {/* Spacer bawah hanya jika bukan fullscreen */}
         {!isFullscreen && <div style={{ height: 24 }} />}
         <div 
-          className={`chart-wrapper w-full h-full relative${isFullscreen ? ' fullscreen-chart' : ''}`}
+          className={`chart-wrapper w-full relative${isFullscreen ? ' fullscreen-chart' : ''}`}
+          style={isFullscreen ? { 
+            marginBottom: '30px', 
+            minHeight: '300px',
+            height: 'auto',
+            maxHeight: 'calc(100vh - 220px)',
+            overflowY: 'visible'
+          } : undefined}
         >
           {loading ? (
             <div className="absolute inset-0 flex items-center justify-center">
@@ -1123,6 +1145,7 @@ export default function SalesChart() {
                 }}
                 options={mainChartOptions}
                 className="chart-canvas"
+                onClick={handleChartClick}
                 redraw={false}
               />
             )
