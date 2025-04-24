@@ -132,10 +132,23 @@ export const RSIChart = ({ data, period = 14, maxScale = 50 }: RSIChartProps) =>
     { label: `Oversold (${oversoldLevel})`, color: 'rgb(34, 197, 94)' }
   ]
 
+  // Pastikan data valid sebelum render Chart
+  const isDataValid = rsiData && rsiData.length > 0 && chartData?.datasets?.[0]?.data?.length > 0
+
   return (
     <div className="sales-chart__rsi">
       <div className="relative">
-        <Line data={chartData} options={chartOptions} />
+        {isDataValid ? (
+          <Line 
+            data={chartData} 
+            options={chartOptions} 
+            redraw={false} 
+          />
+        ) : (
+          <div className="flex items-center justify-center h-40 bg-gray-50 rounded-md">
+            <p className="text-gray-500 text-sm">Tidak cukup data untuk menampilkan RSI</p>
+          </div>
+        )}
         
         <div className="absolute top-0 right-0 bottom-0 w-20 flex flex-col justify-between p-2 text-xs">
           <div className="text-right text-gray-500">{maxScale}</div>

@@ -22,6 +22,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icon-192x192.png" />
         <script src="/js/touch-enhancer.js"></script>
         <script src="/js/mobile-fullscreen.js"></script>
+        <script src="/js/chart-fix.js"></script>
         <script dangerouslySetInnerHTML={{
           __html: `
             // Check for service worker

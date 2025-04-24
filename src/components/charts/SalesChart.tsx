@@ -18,21 +18,23 @@ import {
 import { Line } from 'react-chartjs-2'
 import 'chartjs-adapter-date-fns'
 import '@/styles/chart.css'
+import '@/styles/fullscreen.css'
 import { useSales } from '@/contexts/SalesContext'
 import { supabase } from '@/lib/supabase'
 import { ChartControls } from './ChartControls'
-import { RSIChart } from './RSIChart'
 import { useSMA, useEMA } from '@/hooks/useIndicators'
 import { useRSI } from '@/hooks/useRSI'
 import { usePrediction, createHuggingFaceConfig } from '@/hooks/usePrediction'
 import type { HuggingFaceConfig, PredictionResult } from '@/hooks/usePrediction'
-import { debounce } from 'lodash'
 import { toast } from "react-hot-toast"
+import { debounce } from 'lodash'
+import { useChartJSInit, ensureChartRendered } from './ChartFix'
 
-// Register ChartJS components
+// Register ChartJS components - pastikan ini dilakukan sebelum komponen dirender
+// PENTING: Registrasi ini harus di level modul dan bukan di dalam komponen
 ChartJS.register(
   CategoryScale,
-  LinearScale,
+  LinearScale, // LinearScale wajib diregistrasi untuk sumbu Y
   PointElement,
   LineElement,
   Title,
@@ -42,8 +44,7 @@ ChartJS.register(
   TimeScale,
 )
 
-
-type TimeRange = '7d' | '14d' | '30d' | '60d'
+type TimeRange = '30d' | '60d' | 'custom'
 
 // Tambahkan type untuk font weight
 type FontWeight = 'normal' | 'bold' | 'bolder' | 'lighter' | number;
@@ -59,13 +60,16 @@ const formatTanggal = (tanggal: string) => {
   return `${hari[date.getDay()]}, ${date.getDate()} ${bulan[date.getMonth()]} ${date.getFullYear()}`;
 };
 
+// Definisi fungsi-fungsi di luar komponen SalesChart untuk menghindari masalah reference
+
 export default function SalesChart() {
   const { currentMonth, setCurrentMonth, refreshData, salesData } = useSales()
   const [loading, setLoading] = useState(true)
   const [chartData, setChartData] = useState<any>({ dailyData: [], stats: null })
   const [activeDataset, setActiveDataset] = useState<string[]>(['roti'])
   const chartRef = useRef<any>(null)
-  const [_timeRange] = useState<TimeRange>('7d')
+  const [timeRange, setTimeRange] = useState<TimeRange>('30d')
+  const [customDateRange, setCustomDateRange] = useState<{start: string, end: string}>({start: '', end: ''})
   const [dataIncomplete, setDataIncomplete] = useState(false)
   const [displayMode, setDisplayMode] = useState<'daily' | 'cumulative'>('daily')
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -80,14 +84,67 @@ export default function SalesChart() {
   const [prediction, setPrediction] = useState<PredictionResult | null>(null);
   const [predictionLoading, setPredictionLoading] = useState(false);
   const [predictionError, setPredictionError] = useState<string | null>(null);
+  // Track tooltips melalui Chart.js API langsung tanpa state React
+  const [dailyPredictions, setDailyPredictions] = useState<Record<string, PredictionResult>>({});
+  const [isClient, setIsClient] = useState(false);
+  const [maxBreadValue, setMaxBreadValue] = useState(50);
+  // Tambahkan state untuk tooltip
+  const [activeTooltipIndex, setActiveTooltipIndex] = useState<number | null>(null);
+  const [activeTooltip, setActiveTooltip] = useState(false);
   const huggingFaceConfig: HuggingFaceConfig = createHuggingFaceConfig(
     process.env.NEXT_PUBLIC_HUGGINGFACE_API_KEY || process.env.NEXT_PUBLIC_HF_API_KEY || '',
     'facebook/bart-large-cnn'
   );
 
+  // Effect untuk setup client-side rendering
   useEffect(() => {
-    console.log('[SalesChart] HuggingFace API Key:', huggingFaceConfig.apiKey);
-  }, [huggingFaceConfig.apiKey]);
+    setIsClient(true);
+    
+    // Inisialisasi customDateRange dengan nilai default saat aplikasi dimuat
+    if (!customDateRange.start || !customDateRange.end) {
+      const today = new Date();
+      const thirtyDaysAgo = new Date(today);
+      thirtyDaysAgo.setDate(today.getDate() - 30);
+      
+      setCustomDateRange({
+        start: thirtyDaysAgo.toISOString().split('T')[0],
+        end: today.toISOString().split('T')[0]
+      });
+    }
+    
+    // Definisi fungsi handler untuk fullscreen dan resize
+    const handleFullscreenChange = () => {
+      if (!document.fullscreenElement && isFullscreen) {
+        setIsFullscreen(false);
+        document.body.classList.remove('chart-fullscreen-active');
+        
+        // Reset chart layout setelah keluar dari fullscreen
+        setTimeout(() => {
+          if (chartRef.current?.chart) {
+            chartRef.current.chart.resize();
+          }
+        }, 300);
+      }
+    };
+
+    const handleResize = () => {
+      if (chartRef.current?.chart) {
+        chartRef.current.chart.resize();
+      }
+    };
+    
+    // Setup event listener untuk fullscreen
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    window.addEventListener('resize', handleResize);
+    
+    // Panggil fetchChartData untuk load data awal
+    fetchChartData();
+    
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [])
 
   // Fungsi untuk menyimpan hasil prediksi ke Supabase (mengikuti pola page.tsx)
   async function savePredictionToDB(result: PredictionResult, lastDate: string) {
@@ -140,11 +197,7 @@ export default function SalesChart() {
     }
   };
 
-  const [maxBreadValue, setMaxBreadValue] = useState(50)
-  const [activeTooltipIndex, setActiveTooltipIndex] = useState<number | null>(null);
-  const [activeTooltip, setActiveTooltip] = useState(false);
-  const [isClient, setIsClient] = useState(false);
-  const [dailyPredictions, setDailyPredictions] = useState<Record<string, PredictionResult>>({});
+
 
   // Debounce untuk update layout chart
   const debouncedUpdateLayout = useCallback(
@@ -171,28 +224,7 @@ export default function SalesChart() {
     setIsClient(true);
   }, []);
 
-  // Menggunakan custom hooks untuk indikator
-  const smaData = useSMA(
-    activeDataset.includes('roti')
-      ? chartData.dailyData.map((item: any) => item.total_bread)
-      : chartData.dailyData.map((item: any) => item.total_sales / 1000),
-    smaPeriod
-  )
-
-  const emaData = useEMA(
-    activeDataset.includes('roti')
-      ? chartData.dailyData.map((item: any) => item.total_bread)
-      : chartData.dailyData.map((item: any) => item.total_sales / 1000),
-    emaPeriod
-  )
-
-  // Hitung RSI di luar dataset untuk mencegah re-render yang tidak perlu
-  const rsiData = useRSI(
-    activeDataset.includes('roti')
-      ? chartData.dailyData.map((item: any) => item.total_bread)
-      : chartData.dailyData.map((item: any) => item.total_sales / 1000),
-    14
-  )
+  // Menggunakan custom hooks untuk indikator - akan digunakan nanti dalam mainChartData
 
   useEffect(() => {
     if (!showPrediction || !huggingFaceConfig?.apiKey) return;
@@ -231,6 +263,51 @@ export default function SalesChart() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showPrediction, chartData.dailyData, huggingFaceConfig, emaPeriod, smaPeriod, dailyPredictions]);
 
+  // Inisialisasi Chart.js dengan benar di lingkungan production
+  useChartJSInit()
+  
+  // Fungsi untuk menyiapkan data prediksi
+  // Fungsi preparePredictionData dideklarasikan lebih bawah sebagai useCallback
+  
+  // Pastikan chart dirender dengan benar setelah chartData berubah
+  useEffect(() => {
+    console.log('Chart data berubah, mencoba render chart...');
+    if (chartRef?.current && chartData?.dailyData?.length > 0) {
+      console.log('Chart ref dan data tersedia, menyiapkan render');
+      // Gunakan objek chartData lengkap bukan hanya dailyData
+      const chartDataForRender = {
+        labels: chartData.dailyData.map((item: any) => item.date),
+        datasets: [{
+          label: 'Data',
+          data: chartData.dailyData.map((item: any) => item.total_bread)
+        }]
+      };
+      
+      // Tidak perlu memanggil ensureChartRendered dari dalam useEffect
+      // karena dapat menyebabkan React error #321
+      if (chartDataForRender && chartDataForRender.datasets && chartDataForRender.datasets.length > 0) {
+        console.log('Data chart valid, siap untuk ditampilkan');
+      } else {
+        console.log('Data tidak valid untuk Chart.js');
+      }
+      
+      // Force loading to false setelah data tersedia
+      if (loading) {
+        console.log('Force loading ke false karena data sudah tersedia');
+        setLoading(false);
+      }
+    } else {
+      console.log('Tidak dapat render chart: chartRef atau data tidak tersedia');
+      // Jika masih loading tapi tidak ada data, paksa tampilkan dummy data
+      if (loading && (!chartData?.dailyData || chartData.dailyData.length === 0)) {
+        console.log('Data kosong tapi masih loading, jalankan useDummyData');
+        // Set timeout agar tidak masuk infinite loop
+        setTimeout(useDummyData, 500);
+      }
+    }
+  // Pastikan dependency array benar (gunakan chartData dan loading)
+  }, [chartRef, chartData, loading])
+  
   useEffect(() => {
     setIsMounted(true)
 
@@ -257,32 +334,130 @@ export default function SalesChart() {
     }
   }, [isFullscreen])
 
+  // Reset prediksi saat rentang tanggal berubah dan panggil fetchChartData
   useEffect(() => {
     setDailyPredictions({});
-  }, [currentMonth]);
+    // Gunakan setTimeout untuk mencegah infinite loop
+    const timer = setTimeout(() => {
+      fetchChartData();
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [currentMonth, timeRange, customDateRange]);
 
+  // Gunakan referensi untuk state yang akan digunakan dalam callback
+  const timeRangeRef = useRef(timeRange);
+  const customDateRangeRef = useRef(customDateRange);
+  
+  // Update refs saat state berubah
+  useEffect(() => {
+    timeRangeRef.current = timeRange;
+    customDateRangeRef.current = customDateRange;
+  }, [timeRange, customDateRange]);
+  
   const fetchChartData = useCallback(async () => {
+    // Siapkan variabel untuk cancel timeout
+    let timeoutId: NodeJS.Timeout;
+    
+    // Gunakan nilai dari refs alih-alih state langsung
+    const currentTimeRange = timeRangeRef.current;
+    const currentCustomDateRange = customDateRangeRef.current;
+    
     try {
-      setLoading(true)
+      setLoading(true);
+      console.log('Mulai fetch chart data...');
       
-      const { data, error } = await supabase
-        .from('daily_sales')
-        .select('*')
-        .order('date', { ascending: true })
+      // Tambahkan timeout dan retry untuk menangani masalah koneksi
+      const fetchWithTimeout = async (retries = 1) => {
+        try {
+          // Buat promise untuk timeout
+          const timeoutPromise = new Promise<{data: null, error: Error}>((_, reject) => {
+            timeoutId = setTimeout(() => {
+              console.log('Koneksi timeout setelah 5 detik');
+              reject(new Error('Koneksi timeout'));
+            }, 5000); // Kurangi timeout menjadi 5 detik
+          });
+          
+          // Race antara request dan timeout
+          // Tentukan rentang tanggal berdasarkan timeRange dari ref
+          const today = new Date();
+          let startDate = '';
+          let endDate = today.toISOString().split('T')[0];
+          
+          if (currentTimeRange === '30d') {
+            const thirtyDaysAgo = new Date(today);
+            thirtyDaysAgo.setDate(today.getDate() - 30);
+            startDate = thirtyDaysAgo.toISOString().split('T')[0];
+          } else if (currentTimeRange === '60d') {
+            const sixtyDaysAgo = new Date(today);
+            sixtyDaysAgo.setDate(today.getDate() - 60);
+            startDate = sixtyDaysAgo.toISOString().split('T')[0];
+          } else if (currentTimeRange === 'custom' && currentCustomDateRange) {
+            startDate = currentCustomDateRange.start;
+            endDate = currentCustomDateRange.end;
+          } else {
+            // Default ke 30 hari jika tidak ada pilihan valid
+            const thirtyDaysAgo = new Date(today);
+            thirtyDaysAgo.setDate(today.getDate() - 30);
+            startDate = thirtyDaysAgo.toISOString().split('T')[0];
+          }
+          
+          console.log(`Mengambil data dari ${startDate} sampai ${endDate}`);
+          
+          const result = await Promise.race([
+            supabase
+              .from('daily_sales')
+              .select('*')
+              .gte('date', startDate)
+              .lte('date', endDate)
+              .order('date', { ascending: true }),
+            timeoutPromise
+          ]) as any;
+          
+          // Clear timeout jika request selesai
+          clearTimeout(timeoutId);
+          
+          if (result.error) throw result.error;
+          return { data: result.data, error: null };
+        } catch (err) {
+          clearTimeout(timeoutId); // Pastikan timeout dibersihkan
+          console.log('Error saat fetch:', err);
+          
+          if (retries > 0) {
+            console.log(`Mencoba menghubungkan ke Supabase kembali... (${retries} percobaan tersisa)`);
+            return fetchWithTimeout(retries - 1);
+          }
+          return { data: null, error: err };
+        }
+      };
 
-      if (error) throw error
+      console.log('Mencoba fetch dengan timeout...');
+      const { data, error } = await fetchWithTimeout();
+      console.log('Hasil fetch:', { dataExists: !!data, errorExists: !!error });
       
-      if (!data || data.length === 0) {
-        setChartData({ dailyData: [], stats: null })
-        setLoading(false)
-        return
+      if (error || !data) {
+        // Tampilkan pesan error yang lebih jelas untuk pengguna
+        toast.error('Gagal memuat data: Menggunakan data demo');
+        console.error('Error fetching data:', error);
+        // Gunakan data dummy jika tidak ada koneksi (penting: panggil useDummyData)
+        console.log('Menggunakan data dummy karena error');
+        useDummyData();
+        return;
       }
       
-      const processedData = data.map(item => ({
+      if (data.length === 0) {
+        console.log('Data kosong, menggunakan data dummy');
+        setChartData({ dailyData: [], stats: null });
+        // Jika tidak ada data, gunakan data dummy juga
+        useDummyData();
+        return;
+      }
+      
+      console.log('Data berhasil diambil, total:', data.length);
+      const processedData = data.map((item: any) => ({
         date: item.date,
         total_bread: item.total_bread || 0,
         total_sales: item.total_sales || 0
-      }))
+      }));
 
       setChartData({
         dailyData: processedData,
@@ -290,20 +465,68 @@ export default function SalesChart() {
           totalBread: processedData.reduce((sum, item) => sum + item.total_bread, 0),
           totalSales: processedData.reduce((sum, item) => sum + item.total_sales, 0)
         }
-      })
+      });
 
-      setLoading(false)
+      setLoading(false);
+      console.log('Loading selesai, data siap ditampilkan');
     } catch (error) {
-      console.error('Error fetching data:', error)
-      setLoading(false)
+      console.error('Error di luar fetchWithTimeout:', error);
+      // Tampilkan error yang lebih user-friendly
+      toast.error('Terjadi kesalahan saat memuat data');
+      // Gunakan data dummy jika terjadi error (penting: panggil useDummyData)
+      console.log('Menggunakan data dummy karena error global');
+      useDummyData();
     }
   }, [])
+  
+  // Fungsi untuk menggunakan data dummy jika Supabase tidak terhubung
+  const useDummyData = () => {
+    console.log('Memulai generasi data dummy');
+    const today = new Date();
+    // Gunakan tipe data eksplisit untuk menghindari error TypeScript
+    const dummyData: Array<{date: string; total_bread: number; total_sales: number}> = [];
+    
+    // Buat data dummy untuk 30 hari terakhir
+    for (let i = 29; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+      
+      dummyData.push({
+        date: dateStr,
+        // Nilai acak untuk data dummy
+        total_bread: Math.floor(Math.random() * 50) + 20,
+        total_sales: (Math.floor(Math.random() * 50) + 20) * 8000
+      });
+    }
+    
+    console.log('Data dummy berhasil dibuat, jumlah data:', dummyData.length);
+    
+    // PENTING: Set loading ke false sebelum set chart data
+    setLoading(false);
+    
+    // Tunda sedikit setelah loading false untuk memastikan UI memperbarui state
+    setTimeout(() => {
+      setChartData({
+        dailyData: dummyData,
+        stats: {
+          totalBread: dummyData.reduce((sum, item) => sum + item.total_bread, 0),
+          totalSales: dummyData.reduce((sum, item) => sum + item.total_sales, 0)
+        }
+      });
+      console.log('Data dummy telah diset ke chartData');
+      toast.success('Menggunakan data demo karena tidak ada koneksi internet');
+    }, 100);
+  }
 
+  // Gunakan useChartJSInit untuk memastikan Chart.js terinisialisasi dengan benar
+  const chartInitialized = useChartJSInit();
+  
   useEffect(() => {
-    if (isMounted) {
+    if (isMounted && chartInitialized) {
       fetchChartData()
     }
-  }, [fetchChartData, isMounted])
+  }, [fetchChartData, isMounted, chartInitialized])
 
   useEffect(() => {
     if (chartData.dailyData && chartData.dailyData.length > 0) {
@@ -331,92 +554,216 @@ export default function SalesChart() {
     }
   }, [])
 
+  // Fungsi untuk mendeteksi jika perangkat adalah mobile
+  const isMobileDevice = () => {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+           (window.innerWidth <= 768);
+  }
+
+  // Fungsi utilitas untuk menangani API screen orientation yang berbeda di browser
+
+  // Fungsi untuk me-lock orientasi ke landscape
+  const lockLandscapeOrientation = async () => {
+    try {
+      // Pastikan screen API tersedia (kita di browser)
+      if (typeof window === 'undefined' || !window.screen) return false;
+      
+      // Gunakan tipe any untuk menangani API yang berbeda tanpa masalah TypeScript
+      const screenAny = window.screen as any;
+      
+      // Cek apakah API orientation tersedia dengan aman
+      if (screenAny.orientation && typeof screenAny.orientation.lock === 'function') {
+        await screenAny.orientation.lock('landscape');
+        console.log('Orientasi terkunci ke landscape');
+        return true;
+      } else if (screenAny.msLockOrientation) { // IE/Edge
+        screenAny.msLockOrientation('landscape');
+        console.log('Orientasi terkunci ke landscape (IE/Edge)');
+        return true;
+      } else if (screenAny.mozLockOrientation) { // Firefox
+        screenAny.mozLockOrientation('landscape');
+        console.log('Orientasi terkunci ke landscape (Firefox)');
+        return true;
+      }
+    } catch (error) {
+      console.warn('Tidak dapat mengunci orientasi ke landscape:', error);
+      // Tidak perlu menampilkan error ke user, cukup log di console
+    }
+    return false;
+  }
+
+  // Fungsi untuk melepas lock orientasi
+  const unlockOrientation = async () => {
+    try {
+      // Pastikan screen API tersedia (kita di browser)
+      if (typeof window === 'undefined' || !window.screen) return;
+      
+      // Gunakan tipe any untuk menghindari masalah TypeScript
+      const screenAny = window.screen as any;
+      
+      // Cek apakah API unlock tersedia dengan aman
+      if (screenAny.orientation && typeof screenAny.orientation.unlock === 'function') {
+        screenAny.orientation.unlock();
+        console.log('Orientasi di-unlock');
+      } else if (screenAny.msUnlockOrientation) { // IE/Edge
+        screenAny.msUnlockOrientation();
+        console.log('Orientasi di-unlock (IE/Edge)');
+      } else if (screenAny.mozUnlockOrientation) { // Firefox
+        screenAny.mozUnlockOrientation();
+        console.log('Orientasi di-unlock (Firefox)');
+      }
+    } catch (error) {
+      console.warn('Tidak dapat melepas kunci orientasi:', error);
+      // Hanya log warning, tidak perlu menampilkan error ke user
+    }
+  }
+
   const toggleFullscreen = async () => {
     try {
       if (!isFullscreen) {
         if (chartContainerRef.current) {
+          // Request fullscreen
           if (chartContainerRef.current.requestFullscreen) {
-            await chartContainerRef.current.requestFullscreen()
-          }
-          
-          // Cek apakah device mendukung screen orientation
-          if ('orientation' in screen && 'lock' in screen.orientation) {
-            try {
-              await (screen.orientation as any).lock('landscape')
-            } catch (err) {
-              console.log('Orientasi tidak dapat dikunci:', err)
+            await chartContainerRef.current.requestFullscreen();
+            
+            // Coba lock ke landscape hanya jika di perangkat mobile
+            if (isMobileDevice()) {
+              // Gunakan setTimeout untuk memberikan waktu browser menerapkan fullscreen
+              setTimeout(async () => {
+                const orientationLocked = await lockLandscapeOrientation();
+                if (!orientationLocked) {
+                  // Jika tidak bisa lock orientasi, berikan petunjuk ke user
+                  const mobileHint = document.createElement('div');
+                  mobileHint.className = 'mobile-orientation-hint';
+                  mobileHint.innerHTML = '<div class="p-2 bg-blue-50 text-blue-700 rounded-md text-sm">Untuk tampilan optimal, putar layar ke landscape</div>';
+                  chartContainerRef.current?.appendChild(mobileHint);
+                  
+                  // Hilangkan hint setelah 5 detik
+                  setTimeout(() => mobileHint.remove(), 5000);
+                }
+              }, 500);
             }
           }
           
           // Tambahkan class untuk styling scrollable fullscreen
-          chartContainerRef.current.classList.add('fullscreen-scrollable')
+          chartContainerRef.current.classList.add('fullscreen-scrollable');
           
-          // Tidak perlu menambahkan spacer lagi karena kita hanya ingin scroll sampai tanggal saja
+          // Tambahkan spacer kecil agar bisa scroll sedikit untuk melihat tanggal
+          const existingSpacerElem = chartContainerRef.current.querySelector('.chart-fullscreen-date-spacer')
+          if (!existingSpacerElem) {
+            const spacerElem = document.createElement('div')
+            spacerElem.className = 'chart-fullscreen-date-spacer'
+            spacerElem.style.height = '40px' // Hanya cukup untuk tanggal
+            spacerElem.style.marginTop = '10px' // Tambahkan sedikit margin atas
+            chartContainerRef.current.appendChild(spacerElem)
+          }
         }
-        setIsFullscreen(true)
-        document.body.classList.add('chart-fullscreen-active')
+        setIsFullscreen(true);
+        document.body.classList.add('chart-fullscreen-active');
       } else {
-        if (document.fullscreenElement) {
-          await document.exitFullscreen()
+        // Lepaskan lock orientasi sebelum keluar dari fullscreen
+        if (isMobileDevice()) {
+          await unlockOrientation();
         }
         
-        // Unlock orientasi layar
-        if ('orientation' in screen && 'unlock' in screen.orientation) {
-          try {
-            await screen.orientation.unlock()
-          } catch (err) {
-            console.log('Orientasi tidak dapat di-unlock:', err)
-          }
+        // Keluar dari mode fullscreen
+        if (document.fullscreenElement) {
+          await document.exitFullscreen();
         }
         
         // Hapus class untuk styling scrollable fullscreen
         if (chartContainerRef.current) {
-          chartContainerRef.current.classList.remove('fullscreen-scrollable')
+          chartContainerRef.current.classList.remove('fullscreen-scrollable');
+          
+          // Hapus hint orientasi jika ada
+          const orientationHint = chartContainerRef.current.querySelector('.mobile-orientation-hint');
+          if (orientationHint) {
+            orientationHint.remove();
+          }
           
           // Hapus spacer saat keluar dari fullscreen
-          const spacer = chartContainerRef.current.querySelector('.chart-fullscreen-spacer')
+          const spacer = chartContainerRef.current.querySelector('.chart-fullscreen-date-spacer')
           if (spacer) {
             spacer.remove()
           }
         }
         
-        setIsFullscreen(false)
-        document.body.classList.remove('chart-fullscreen-active')
+        setIsFullscreen(false);
+        document.body.classList.remove('chart-fullscreen-active');
       }
       
       // Pastikan chart diresize dengan benar setelah perubahan mode
       setTimeout(() => {
         if (chartRef.current?.chart) {
           chartRef.current.chart.resize()
+          // Gunakan update 'none' untuk menghindari animasi yang tidak perlu
+          chartRef.current.chart.update('none')
         }
       }, 300)
     } catch (error) {
       console.error('Error toggling fullscreen:', error)
+      toast.error('Gagal mengubah mode fullscreen')
     }
   }
 
+  // Definisi fungsi closeTooltip untuk menutup tooltip chart
   const closeTooltip = useCallback(() => {
     setActiveTooltipIndex(null);
     setActiveTooltip(false);
-    if (chartRef.current?.chart) {
+    if (chartRef?.current?.chart) {
       chartRef.current.chart.setActiveElements([]);
       chartRef.current.chart.tooltip.setActiveElements([], { x: 0, y: 0 });
       chartRef.current.chart.update('none');
     }
   }, []);
+  
+  // Fungsi untuk menangani klik di luar area chart
+  const handleClickOutside = useCallback((event: MouseEvent) => {
+    if (chartContainerRef?.current && !chartContainerRef.current.contains(event.target as Node)) {
+      closeTooltip();
+    }
+  }, [closeTooltip, chartContainerRef]);
 
+  // Effect untuk tooltip handling dan click outside detection
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (chartContainerRef.current && !chartContainerRef.current.contains(event.target as Node)) {
-        closeTooltip();
-      }
-    };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [closeTooltip]);
-
+  }, [handleClickOutside]);
+  
+  // Fungsi untuk menyiapkan data prediksi
+  const preparePredictionData = useCallback(() => {
+    if (!chartData?.dailyData?.length || !showPrediction) return [];
+    const result = Array(chartData.dailyData.length).fill(null);
+    const lastIdx = chartData.dailyData.length - 1;
+    if (lastIdx >= 0) {
+      const lastValue = activeDataset.includes('roti')
+        ? chartData.dailyData[lastIdx].total_bread
+        : chartData.dailyData[lastIdx].total_sales / 1000;
+      result[lastIdx] = lastValue;
+    }
+    result.push(prediction?.predictionValue);
+    return result;
+  }, [chartData, showPrediction, activeDataset, prediction]);
+  
+  // Mempersiapkan data untuk indikator teknikal
+  const smaData = useSMA(chartData?.dailyData?.map((item: any) => 
+    activeDataset.includes('roti') ? item.total_bread : item.total_sales / 1000) || [], 
+    smaPeriod
+  );
+  
+  const emaData = useEMA(chartData?.dailyData?.map((item: any) => 
+    activeDataset.includes('roti') ? item.total_bread : item.total_sales / 1000) || [], 
+    emaPeriod
+  );
+  
+  const rsiData = useRSI(chartData?.dailyData?.map((item: any) => 
+    activeDataset.includes('roti') ? item.total_bread : item.total_sales / 1000) || [], 
+    14, 100
+  );
+  
+  // Definisi data utama untuk chart
   const mainChartData = {
-    labels: chartData.dailyData.map((item: any) => {
+    labels: chartData?.dailyData?.map((item: any) => {
       // Konversi ke zona waktu Jakarta/Indonesia (UTC+7)
       const dateStr = item.date.includes('T') ? item.date : `${item.date}T00:00:00+07:00`;
       
@@ -431,11 +778,11 @@ export default function SalesChart() {
       
       // Format yang lebih ringkas: "15-Apr'24" (tanggal sesuai dengan halaman penjualan)
       return `${date.getDate()}-${bulan[date.getMonth()]} '${tahun}`;
-    }),
+    }) || [],
     datasets: [
       {
         label: 'Roti Terjual',
-        data: chartData.dailyData.map((item: any) => item.total_bread),
+        data: chartData?.dailyData?.map((item: any) => item.total_bread) || [],
         borderColor: 'rgb(59, 130, 246)',
         backgroundColor: 'rgba(59, 130, 246, 0.15)',
         borderWidth: 2,
@@ -451,7 +798,7 @@ export default function SalesChart() {
       },
       {
         label: 'Omset',
-        data: chartData.dailyData.map((item: any) => item.total_sales / 1000),
+        data: chartData?.dailyData?.map((item: any) => item.total_sales / 1000) || [],
         borderColor: 'rgb(34, 197, 94)',
         backgroundColor: 'rgba(34, 197, 94, 0.15)',
         borderWidth: 2,
@@ -474,7 +821,7 @@ export default function SalesChart() {
         tension: 0.4,
         borderDash: [5, 5],
         fill: false,
-        yAxisID: activeDataset.includes('roti') ? 'y-roti' : 'y-omset'
+        yAxisID: activeDataset?.includes('roti') ? 'y-roti' : 'y-omset'
       }] : []),
       ...(showEMA ? [{
         label: `EMA-${emaPeriod}`,
@@ -485,7 +832,7 @@ export default function SalesChart() {
         tension: 0.4,
         borderDash: [5, 5],
         fill: false,
-        yAxisID: activeDataset.includes('roti') ? 'y-roti' : 'y-omset'
+        yAxisID: activeDataset?.includes('roti') ? 'y-roti' : 'y-omset'
       }] : []),
       ...(showRSI ? [{
         label: 'RSI-14',
@@ -505,34 +852,89 @@ export default function SalesChart() {
         pointRadius: 5
       }] : [])
     ]
-  }
-
-  function preparePredictionData() {
-    if (!chartData.dailyData.length || !showPrediction) return [];
-    const result = Array(chartData.dailyData.length).fill(null);
-    const lastIdx = chartData.dailyData.length - 1;
-    if (lastIdx >= 0) {
-      const lastValue = activeDataset.includes('roti')
-        ? chartData.dailyData[lastIdx].total_bread
-        : chartData.dailyData[lastIdx].total_sales / 1000;
-      result[lastIdx] = lastValue;
-    }
-    result.push(prediction?.predictionValue);
-    return result;
-  }
-
+  };
+  
+  // Opsi utama untuk chart
   const mainChartOptions: ChartOptions<'line'> = {
     responsive: true,
     maintainAspectRatio: false,
     animation: {
       duration: 250
     },
-
+    scales: {
+      x: {
+        grid: {
+          color: 'rgba(0, 0, 0, 0.05)',
+          // @ts-ignore - borderColor property untuk chart.js grid
+          borderColor: 'rgba(0, 0, 0, 0.1)',
+          display: false
+        },
+        ticks: {
+          font: {
+            size: 11,
+            weight: '500' as FontWeight
+          },
+          color: '#333'
+        }
+      },
+      'y-rsi': {
+        type: 'linear',
+        display: showRSI,
+        position: 'right',
+        min: 0,
+        max: 100,
+        title: {
+          display: true,
+          text: 'RSI-14',
+          color: 'rgb(236, 72, 153)',
+          font: {
+            size: 11,
+            weight: 500
+          }
+        },
+        grid: {
+          display: false
+        }
+      },
+      'y-roti': {
+        type: 'linear',
+        position: 'left',
+        beginAtZero: true,
+        title: {
+          display: true, 
+          text: 'Roti Terjual',
+          color: 'rgb(59, 130, 246)'
+        },
+        ticks: {
+          color: '#333'
+        },
+        grid: {
+          color: 'rgba(0, 0, 0, 0.05)'
+        }
+      },
+      'y-omset': {
+        type: 'linear',
+        position: 'right',
+        beginAtZero: true,
+        title: {
+          display: true,
+          text: 'Omset (Ribu Rp)',
+          color: 'rgb(34, 197, 94)'
+        },
+        ticks: {
+          color: '#333'
+        },
+        grid: {
+          display: false
+        }
+      }
+    },
     interaction: {
-      mode: 'nearest', // lebih responsif, tidak harus tepat di titik
-      intersect: false, // klik di sekitar titik tetap terdeteksi
+      mode: 'nearest' as const,
+      intersect: false,
+      // @ts-ignore - events property untuk chart.js
       events: ['click']
-    } as any,
+    },
     plugins: {
       legend: {
         display: false
@@ -560,208 +962,126 @@ export default function SalesChart() {
         },
         bodySpacing: 6,
         caretSize: 6,
-        displayColors: true,
-        filter: (tooltipItem) => true
-      },
+        displayColors: true
+      }
     },
     onClick: (event, elements) => {
-      // Jika sudah ada tooltip aktif, tutup saja
-      if (activeTooltip) {
-        closeTooltip();
-        return;
-      }
-      
       // Jika tidak ada elemen yang diklik, tutup tooltip
       if (elements.length === 0) {
-        closeTooltip();
+        if (chartRef?.current?.chart) {
+          chartRef.current.chart.setActiveElements([]);
+          chartRef.current.chart.tooltip.setActiveElements([], { x: 0, y: 0 });
+          chartRef.current.chart.update('none');
+        }
       } else {
         // Jika ada elemen yang diklik, tampilkan tooltip
         const idx = elements[0].index;
-        setActiveTooltipIndex(idx);
+        // Perbarui tampilan tooltip melalui Chart.js API langsung
+        if (chartRef?.current?.chart) {
+          chartRef.current.chart.tooltip.setActiveElements([{datasetIndex: 0, index: idx}], {x: 0, y: 0});
+          chartRef.current.chart.update('none');
+        }
       }
     },
-    scales: {
-      'y-roti': {
-        type: 'linear',
-        display: activeDataset.includes('roti'),
-        position: 'left',
-        title: {
-          display: true,
-          text: 'Roti Terjual (pcs)',
-          color: 'rgb(59, 130, 246)',
-          font: {
-            size: 11,
-            weight: 500
-          }
-        },
-        grid: {
-          color: 'rgba(0, 0, 0, 0.05)',
-          border: {
-            display: false
-          }
-        } as any,
-        ticks: {
-          font: {
-            size: 10
-          },
-          color: '#6b7280',
-          padding: 5,
-          callback: (value) => value.toLocaleString('id-ID')
-        }
-      },
-      'y-omset': {
-        type: 'linear',
-        display: activeDataset.includes('omset'),
-        position: 'right',
-        title: {
-          display: true,
-          text: 'Omset (Ribu Rupiah)',
-          color: 'rgb(34, 197, 94)',
-          font: {
-            size: 11,
-            weight: 500
-          }
-        },
-        grid: {
-          display: false
-        },
-        ticks: {
-          font: {
-            size: 10
-          },
-          color: '#6b7280',
-          padding: 5,
-          callback: (value) => `Rp ${value.toLocaleString('id-ID')}K`
-        }
-      },
-      'y-rsi': {
-        type: 'linear',
-        display: showRSI,
-        position: 'right',
-        min: 0,
-        max: activeDataset.includes('roti') ? maxBreadValue : 100,
-        title: {
-          display: true,
-          text: 'RSI (Momentum)',
-          color: 'rgb(236, 72, 153)',
-          font: {
-            size: 11,
-            weight: 500
-          }
-        },
-        grid: {
-          display: true,
-          color: (context) => {
-            const overboughtLevel = activeDataset.includes('roti') ? maxBreadValue * 0.8 : 80;
-            const oversoldLevel = activeDataset.includes('roti') ? maxBreadValue * 0.2 : 20;
-            const neutralLevel = activeDataset.includes('roti') ? maxBreadValue * 0.5 : 50;
-            const neutralLowerLevel = activeDataset.includes('roti') ? maxBreadValue * 0.4 : 40;
-            const neutralUpperLevel = activeDataset.includes('roti') ? maxBreadValue * 0.6 : 60;
-
-            if (context.tick.value === overboughtLevel) return 'rgba(239, 68, 68, 0.2)';      // Merah untuk overbought
-            if (context.tick.value === oversoldLevel) return 'rgba(34, 197, 94, 0.2)';      // Hijau untuk oversold
-            if (context.tick.value === neutralLevel) return 'rgba(236, 72, 153, 0.2)';     // Pink untuk netral
-            if (context.tick.value === neutralLowerLevel) return 'rgba(236, 72, 153, 0.15)';    // Pink untuk netral bawah
-            if (context.tick.value === neutralUpperLevel) return 'rgba(236, 72, 153, 0.15)';    // Pink untuk netral atas
-            return 'rgba(0, 0, 0, 0.05)';
-          }
-        },
-        ticks: {
-          font: {
-            size: 10
-          },
-          color: (context) => {
-            const overboughtLevel = activeDataset.includes('roti') ? maxBreadValue * 0.8 : 80;
-            const oversoldLevel = activeDataset.includes('roti') ? maxBreadValue * 0.2 : 20;
-            const neutralLevel = activeDataset.includes('roti') ? maxBreadValue * 0.5 : 50;
-            const neutralLowerLevel = activeDataset.includes('roti') ? maxBreadValue * 0.4 : 40;
-            const neutralUpperLevel = activeDataset.includes('roti') ? maxBreadValue * 0.6 : 60;
-
-            if (context.tick.value === overboughtLevel) return 'rgb(239, 68, 68)';      // Merah
-            if (context.tick.value === oversoldLevel) return 'rgb(34, 197, 94)';      // Hijau
-            if (context.tick.value === neutralLevel) return 'rgb(236, 72, 153)';     // Pink
-            if (context.tick.value === neutralLowerLevel) return 'rgb(236, 72, 153)';     // Pink
-            if (context.tick.value === neutralUpperLevel) return 'rgb(236, 72, 153)';     // Pink
-            return '#6b7280';
-          },
-          stepSize: activeDataset.includes('roti') ? maxBreadValue * 0.1 : 10,
-          callback: (value) => {
-            const overboughtLevel = activeDataset.includes('roti') ? maxBreadValue * 0.8 : 80;
-            const oversoldLevel = activeDataset.includes('roti') ? maxBreadValue * 0.2 : 20;
-            const neutralLevel = activeDataset.includes('roti') ? maxBreadValue * 0.5 : 50;
-            const neutralLowerLevel = activeDataset.includes('roti') ? maxBreadValue * 0.4 : 40;
-            const neutralUpperLevel = activeDataset.includes('roti') ? maxBreadValue * 0.6 : 60;
-
-            if (value === overboughtLevel) return `J.Beli (${Math.round(overboughtLevel)})`;
-            if (value === oversoldLevel) return `J.Jual (${Math.round(oversoldLevel)})`;
-            if (value === neutralUpperLevel) return `N.Atas (${Math.round(neutralUpperLevel)})`;
-            if (value === neutralLevel) return `Netral (${Math.round(neutralLevel)})`;
-            if (value === neutralLowerLevel) return `N.Bawah (${Math.round(neutralLowerLevel)})`;
-            return value.toString();
-          }
-        }
-      },
-      x: {
-        grid: {
-          display: true,
-          color: 'rgba(0, 0, 0, 0.05)'
-        },
-        ticks: {
-          font: {
-            size: 9,
-            weight: 'bold' as FontWeight
-          },
-          color: (context) => {
-            // Cek apakah data penjualan kosong/nol
-            const datasetIndex = activeDataset.includes('roti') ? 0 : 1; // Pilih dataset yang aktif
-            const dataIndex = context.index;
-            
-            if (dataIndex < chartData.dailyData.length) {
-              const value = activeDataset.includes('roti') 
-                ? chartData.dailyData[dataIndex].total_bread 
-                : chartData.dailyData[dataIndex].total_sales;
-              
-              // Jika nilai 0 atau tidak ada, warna merah
-              return (value === 0 || value === null || value === undefined) 
-                ? '#ef4444' // merah
-                : '#4b5563'; // warna normal
-            }
-            
-            return '#4b5563'; // default color
-          },
-          padding: 10, // Tambah padding untuk label
-          maxRotation: 45,
-          minRotation: 45,
-          autoSkip: false,
-          includeBounds: true,
-          // Pastikan label tanggal tidak terpotong dengan memberikan margin yang cukup
-          z: 10 // Pastikan label tanggal tampil di atas elemen lain
-        }
+    elements: {
+      line: {
+        tension: 0 // Pastikan tidak ada bezier curve
       }
     }
-  }
-
+  };
+    // Perbaikan struktur return statement
   return (
     <div
       ref={chartContainerRef}
-      className={`sales-chart${isFullscreen ? ' fullscreen-scrollable' : ''}`}
+      className={`sales-chart w-full h-full${isFullscreen ? ' fullscreen-scrollable' : ''}`}
+      style={isFullscreen ? { backgroundColor: '#ffffff', maxHeight: '100vh' } : undefined}
     >
-      <ChartControls
-        activeDataset={activeDataset}
-        setActiveDataset={setActiveDataset}
-        showSMA={showSMA}
-        setShowSMA={setShowSMA}
-        showEMA={showEMA}
-        setShowEMA={setShowEMA}
-        showRSI={showRSI}
-        setShowRSI={setShowRSI}
-        showPrediction={showPrediction}
-        setShowPrediction={setShowPrediction}
-        displayMode={displayMode}
-        setDisplayMode={setDisplayMode}
-        isFullscreen={isFullscreen}
-        toggleFullscreen={toggleFullscreen}
-      />
+      <div className="chart-controls-wrapper">
+        <ChartControls
+          activeDataset={activeDataset}
+          setActiveDataset={setActiveDataset}
+          showSMA={showSMA}
+          setShowSMA={setShowSMA}
+          showEMA={showEMA}
+          setShowEMA={setShowEMA}
+          showRSI={showRSI}
+          setShowRSI={setShowRSI}
+          showPrediction={showPrediction}
+          setShowPrediction={setShowPrediction}
+          displayMode={displayMode}
+          setDisplayMode={setDisplayMode}
+          isFullscreen={isFullscreen}
+          toggleFullscreen={toggleFullscreen}
+        />
+        
+        {/* Tambahkan kontrol untuk rentang waktu */}
+        <div className="time-range-controls mb-3 px-2">
+          <div className="flex items-center space-x-2 flex-wrap">
+            <div className="flex space-x-2">
+              <button
+                onClick={() => {
+                  setTimeRange('30d');
+                  setTimeout(fetchChartData, 50);
+                }}
+                className={`px-2 py-1 text-sm rounded ${timeRange === '30d' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+              >
+                30 Hari
+              </button>
+              <button
+                onClick={() => {
+                  setTimeRange('60d');
+                  setTimeout(fetchChartData, 50);
+                }}
+                className={`px-2 py-1 text-sm rounded ${timeRange === '60d' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+              >
+                60 Hari
+              </button>
+              <button
+                onClick={() => setTimeRange('custom')}
+                className={`px-2 py-1 text-sm rounded ${timeRange === 'custom' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+              >
+                Kustom
+              </button>
+            </div>
+            
+            {timeRange === 'custom' && (
+              <div className="flex flex-wrap items-center space-x-2 mt-2 md:mt-0">
+                <div className="flex items-center space-x-1">
+                  <span className="text-xs">Dari:</span>
+                  <input
+                    type="date"
+                    value={customDateRange.start || ''}
+                    onChange={(e) => setCustomDateRange({...customDateRange, start: e.target.value})}
+                    className="p-1 text-xs border rounded"
+                  />
+                </div>
+                <div className="flex items-center space-x-1 mt-1 md:mt-0">
+                  <span className="text-xs">Sampai:</span>
+                  <input
+                    type="date"
+                    value={customDateRange.end || ''}
+                    onChange={(e) => setCustomDateRange({...customDateRange, end: e.target.value})}
+                    className="p-1 text-xs border rounded"
+                    max={new Date().toISOString().split('T')[0]}
+                  />
+                </div>
+                <button
+                  onClick={() => {
+                    if (customDateRange.start && customDateRange.end) {
+                      setTimeout(fetchChartData, 50);
+                    } else {
+                      toast.error('Pilih tanggal awal dan akhir');
+                    }
+                  }}
+                  className="ml-2 px-2 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
+                >
+                  Terapkan
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
       {/* Tombol prediksi LLM */}
       <button
         onClick={handlePredictionClick}
@@ -790,12 +1110,20 @@ export default function SalesChart() {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
             </div>
           ) : (
-            isClient && (
+            isClient && mainChartData?.datasets?.length > 0 && (
               <Line
                 ref={chartRef}
-                data={mainChartData}
+                data={{
+                  ...mainChartData,
+                  datasets: mainChartData.datasets.map(dataset => ({
+                    ...dataset,
+                    tension: 0, // Gunakan 0 untuk menghindari bezier curve yang membutuhkan cp1x
+                    cubicInterpolationMode: 'monotone' // Mode interpolasi yang lebih stabil
+                  }))
+                }}
                 options={mainChartOptions}
                 className="chart-canvas"
+                redraw={false}
               />
             )
           )}
@@ -821,4 +1149,4 @@ export default function SalesChart() {
     )}
     </div>
   )
-} 
+}

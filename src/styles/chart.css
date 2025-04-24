@@ -924,42 +924,125 @@ body {
   left: 0 !important;
   width: 100vw !important;
   height: 100vh !important;
-  background: rgba(255, 255, 255, 0.128);
+  background: rgba(255, 255, 255, 0.98); /* Latar belakang lebih solid */
   z-index: 9999;
   padding: 1rem !important;
   margin: 0 !important;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  overflow-y: scroll !important;
+  overflow-y: scroll !important; /* Ubah ke scroll untuk memastikan selalu bisa di-scroll */
   overflow-x: hidden !important;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+  scrollbar-width: thin; /* Untuk Firefox */
 }
 
 .fullscreen-chart .chart-wrapper {
   width: 100%;
   height: auto;
-  min-height: 50vh;
+  min-height: 40vh; /* Kurangi minimum height */
+  max-height: 80vh; /* Batasi maximum height */
   padding: 1rem;
-  padding-bottom: 150px;
+  padding-bottom: 2rem; /* Kurangi padding bawah */
   touch-action: auto !important;
   overflow: visible !important;
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .fullscreen-chart .chart-wrapper,
 .fullscreen-chart .chart-main {
   height: auto !important;
-  max-height: none !important;
+  max-height: 80vh !important; /* Batasi tinggi maksimum */
 }
 .fullscreen-chart canvas {
   height: 40vh !important;
-  max-height: 45vh !important;
+  max-height: 70vh !important;
   min-height: 180px !important;
   width: 100% !important;
-  margin-bottom: 150px !important;
+  margin-bottom: 0.5rem !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  border-radius: 0.375rem;
   box-sizing: border-box;
   display: block;
   transform: none !important;
   touch-action: auto !important;
+}
+
+/* Style untuk spacer tanggal di mode fullscreen */
+.chart-fullscreen-date-spacer {
+  width: 100%;
+  height: 60px !important; /* Tinggi yang cukup untuk melihat tanggal */
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+/* Styling untuk kontrol rentang waktu */
+.time-range-controls {
+  margin-top: 10px;
+  margin-bottom: 15px;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.time-range-controls input[type="date"] {
+  max-width: 150px;
+}
+
+/* Responsive styling */
+@media (max-width: 768px) {
+  .time-range-controls {
+    margin-top: 8px;
+    margin-bottom: 10px;
+  }
+  
+  .time-range-controls .flex {
+    flex-wrap: wrap;
+  }
+  
+  .time-range-controls input[type="date"] {
+    max-width: 130px;
+  }
+  
+  .time-range-controls button {
+    padding: 4px 8px;
+    font-size: 0.7rem;
+  }
+}
+
+/* Improve date label visibility */
+.chart-js-xaxis-labels {
+  font-size: 10px !important;
+  font-weight: 500 !important;
+  color: #333 !important;
+  text-shadow: 0 0 2px white !important;
+  transform: translateY(2px) !important;
+}
+
+.fullscreen-chart .chart-js-xaxis-labels {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+}
+
+/* Style untuk scrollbar pada mode fullscreen */
+.fullscreen-chart::-webkit-scrollbar {
+  width: 6px;
+}
+
+.fullscreen-chart::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.fullscreen-chart::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 10px;
+}
+
+.fullscreen-chart::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
 }
 
 /* Responsif untuk mobile */
@@ -2208,6 +2291,28 @@ body, html {
   background-color: #f8fafc !important; /* Tambahkan latar belakang */
 }
 
+/* Hint untuk orientasi mobile */
+.mobile-orientation-hint {
+  position: fixed;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  width: 90%;
+  max-width: 300px;
+  text-align: center;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  animation: fadeInOut 5s ease-in-out;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+  15% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  85% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+}
+
 .fullscreen-scrollable .chart-wrapper {
   height: auto !important;
   min-height: auto !important;
@@ -2234,6 +2339,40 @@ body, html {
   .fullscreen-chart canvas {
     max-height: 30vh !important;
     margin-bottom: 110px !important;
+  }
+}
+
+/* Optimasi untuk mode landscape mobile */
+@media screen and (orientation: landscape) and (max-height: 500px) {
+  .fullscreen-chart {
+    overflow-y: auto !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    background-color: rgba(255, 255, 255, 0.98) !important;
+  }
+  
+  .fullscreen-chart .chart-wrapper {
+    height: auto !important;
+    min-height: auto !important;
+    max-height: 85vh !important;
+    padding: 10px !important;
+    margin: 5px auto !important;
+    width: 95% !important;
+    max-width: 1200px !important;
+  }
+  
+  .fullscreen-chart canvas {
+    height: auto !important;
+    max-height: 70vh !important;
+    width: 100% !important;
+    margin-bottom: 10px !important;
+  }
+  
+  /* Perbaiki posisi label di mode landscape */
+  .fullscreen-chart .chartjs-axis-labels text {
+    font-size: 10px !important;
+    font-weight: 600 !important;
+    text-shadow: 0 0 2px rgba(255, 255, 255, 0.8) !important;
   }
 }
 

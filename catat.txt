@@ -1,3 +1,3 @@
 git add .
-git commit -m "modol"
+git commit -m "alhamdulillah"
 git push origin main

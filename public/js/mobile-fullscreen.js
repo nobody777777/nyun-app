@@ -126,9 +126,12 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // Perbaikan penanganan unlock orientasi
       try {
-        if (screen.orientation && 
+        // Lebih aman: cek dulu apakah semua properti tersedia 
+        // untuk menghindari TypeError pada perangkat yang tidak mendukung
+        if (screen && screen.orientation && 
             typeof screen.orientation.unlock === 'function') {
-          screen.orientation.unlock()
+          // Gunakan Promise.prototype.catch untuk menangani error
+          Promise.resolve(screen.orientation.unlock())
             .catch(error => console.log('Gagal unlock orientasi:', error));
         }
       } catch (error) {

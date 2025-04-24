@@ -1,0 +1,41 @@
+/* Fix khusus untuk memastikan chart dirender dengan benar di mode production */
+
+/* Pastikan container chart memiliki dimensi yang tepat */
+.chart-container {
+  position: relative !important;
+  min-height: 400px !important;
+  width: 100% !important;
+  display: block !important;
+}
+
+/* Pastikan canvas chart selalu terlihat */
+.chart-canvas {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  min-height: 300px !important;
+}
+
+/* Pastikan wrapper chart memiliki dimensi yang tepat */
+.chart-wrapper {
+  position: relative !important;
+  min-height: 300px !important;
+  width: 100% !important;
+  display: block !important;
+}
+
+/* Pastikan chart-main memiliki dimensi yang tepat */
+.chart-main {
+  position: relative !important;
+  min-height: 300px !important;
+  width: 100% !important;
+  display: block !important;
+}
+
+/* Pastikan sales-chart memiliki dimensi yang tepat */
+.sales-chart {
+  position: relative !important;
+  min-height: 400px !important;
+  width: 100% !important;
+  display: block !important;
+}

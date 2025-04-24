@@ -1,1 +1,580 @@
-always respond in indonesia
+1.always respond in indonesia
+2.this is my structure project
+D:\APLIKASI BY KYZ\NYUN\PUBLIC
+│   favicon.ico
+│   icon-192x192.png
+│   icon-512x512.png
+│   manifest.json
+│   sw.js
+│
+├───js
+│       chart-fix.js
+│       mobile-fullscreen.js
+│       touch-enhancer.js
+│
+└───splash
+        apple-splash-1125-2436.jpg
+        apple-splash-1170-2532.jpg
+        apple-splash-1179-2556.jpg
+        apple-splash-1206-2622.jpg
+        apple-splash-1242-2208.jpg
+        apple-splash-1242-2688.jpg
+        apple-splash-1284-2778.jpg
+        apple-splash-1290-2796.jpg
+        apple-splash-1320-2868.jpg
+        apple-splash-1488-2266.jpg
+        apple-splash-1536-2048.jpg
+        apple-splash-1620-2160.jpg
+        apple-splash-1640-2360.jpg
+        apple-splash-1668-2224.jpg
+        apple-splash-1668-2388.jpg
+        apple-splash-2048-2732.jpg
+        apple-splash-640-1136.jpg
+        apple-splash-750-1334.jpg
+        apple-splash-828-1792.jpg
+
+
+SRC
+├───app
+│   │   globals.css
+│   │   layout.tsx
+│   │   metadata.ts
+│   │   page.tsx
+│   │
+│   ├───calculator
+│   │   │   page.tsx
+│   │   │
+│   │   ├───components
+│   │   │       IngredientCard.tsx
+│   │   │       PurchaseHistory.tsx
+│   │   │
+│   │   ├───data
+│   │   │       ingredients.ts
+│   │   │
+│   │   ├───history
+│   │   │       page.tsx
+│   │   │
+│   │   └───lib
+│   │           db.ts
+│   │           purchaseService.ts
+│   │
+│   ├───dashboard
+│   │       page.tsx
+│   │       
+│   ├───orders
+│   │   ├───history
+│   │   │       page.tsx
+│   │   │
+│   │   ├───input
+│   │   │       page.tsx
+│   │   │
+│   │   └───monitoring
+│   │           page.tsx
+│   │
+│   ├───sales
+│   │       page.tsx
+│   │
+│   ├───settings
+│   │       page.tsx
+│   │
+│   └───weather
+│           page.tsx
+│
+├───components
+│   │   AppLayout.tsx
+│   │   AppLoaded.tsx
+│   │   AppProviders.tsx
+│   │   ClientLayout.tsx
+│   │   Layout.tsx
+│   │   ServiceWorkerRegistration.tsx
+│   │   Sidebar.tsx
+│   │
+│   ├───calculator
+│   │       Calculator.tsx
+│   │
+│   ├───charts
+│   │       ChartControls.tsx
+│   │       ChartFix.ts
+│   │       ChartFix.tsx
+│   │       ChartWrapper.tsx
+│   │       RSIChart.tsx
+│   │       SalesChart.tsx
+│   │
+│   ├───sales
+│   │       SalesCalendar.tsx
+│   │       SalesForm.tsx
+│   │
+│   ├───settings
+│   │       LocationAutocomplete.tsx
+│   │
+│   ├───ui
+│   │       Popup.tsx
+│   │       PopupManager.tsx
+│   │
+│   └───weather
+│           WeatherDisplay.tsx
+│           WeatherWidget.tsx
+│
+├───contexts
+│       SalesContext.tsx
+│
+├───hooks
+│       useIndicators.ts
+│       usePrediction.ts
+│       useRSI.ts
+│
+├───lib
+│       db-helpers.ts
+│       supabase.ts
+│       types.ts
+│       weather-api.ts
+│
+├───pages
+│   └───api
+│           predict.ts
+│
+└───styles
+        chart-mobile-fix.css
+        chart-mobile-override.css
+        chart-production-fix.css
+        chart.css
+        dashboard.css
+        fullscreen.css
+        globals.css
+
+3.this my code eror in file saleschart.tsx
+[{
+	"resource": "/d:/APLIKASI BY KYZ/nyun/src/components/charts/SalesChart.tsx",
+	"owner": "typescript",
+	"code": "2304",
+	"severity": 8,
+	"message": "Cannot find name 'setActiveTooltipIndex'.",
+	"source": "ts",
+	"startLineNumber": 740,
+	"startColumn": 5,
+	"endLineNumber": 740,
+	"endColumn": 26
+},{
+	"resource": "/d:/APLIKASI BY KYZ/nyun/src/components/charts/SalesChart.tsx",
+	"owner": "typescript",
+	"code": "2304",
+	"severity": 8,
+	"message": "Cannot find name 'setActiveTooltip'.",
+	"source": "ts",
+	"startLineNumber": 741,
+	"startColumn": 5,
+	"endLineNumber": 741,
+	"endColumn": 21
+},{
+	"resource": "/d:/APLIKASI BY KYZ/nyun/src/components/charts/SalesChart.tsx",
+	"owner": "typescript",
+	"code": "2304",
+	"severity": 8,
+	"message": "Cannot find name 'chartRef'.",
+	"source": "ts",
+	"startLineNumber": 858,
+	"startColumn": 9,
+	"endLineNumber": 858,
+	"endColumn": 17
+},{
+	"resource": "/d:/APLIKASI BY KYZ/nyun/src/components/charts/SalesChart.tsx",
+	"owner": "typescript",
+	"code": "2304",
+	"severity": 8,
+	"message": "Cannot find name 'chartRef'.",
+	"source": "ts",
+	"startLineNumber": 859,
+	"startColumn": 7,
+	"endLineNumber": 859,
+	"endColumn": 15
+},{
+	"resource": "/d:/APLIKASI BY KYZ/nyun/src/components/charts/SalesChart.tsx",
+	"owner": "typescript",
+	"code": "2304",
+	"severity": 8,
+	"message": "Cannot find name 'chartRef'.",
+	"source": "ts",
+	"startLineNumber": 860,
+	"startColumn": 7,
+	"endLineNumber": 860,
+	"endColumn": 15
+},{
+	"resource": "/d:/APLIKASI BY KYZ/nyun/src/components/charts/SalesChart.tsx",
+	"owner": "typescript",
+	"code": "2304",
+	"severity": 8,
+	"message": "Cannot find name 'chartRef'.",
+	"source": "ts",
+	"startLineNumber": 861,
+	"startColumn": 7,
+	"endLineNumber": 861,
+	"endColumn": 15
+},{
+	"resource": "/d:/APLIKASI BY KYZ/nyun/src/components/charts/SalesChart.tsx",
+	"owner": "typescript",
+	"code": "2304",
+	"severity": 8,
+	"message": "Cannot find name 'chartRef'.",
+	"source": "ts",
+	"startLineNumber": 863,
+	"startColumn": 7,
+	"endLineNumber": 863,
+	"endColumn": 15
+},{
+	"resource": "/d:/APLIKASI BY KYZ/nyun/src/components/charts/SalesChart.tsx",
+	"owner": "typescript",
+	"code": "2304",
+	"severity": 8,
+	"message": "Cannot find name 'chartContainerRef'.",
+	"source": "ts",
+	"startLineNumber": 868,
+	"startColumn": 11,
+	"endLineNumber": 868,
+	"endColumn": 28
+},{
+	"resource": "/d:/APLIKASI BY KYZ/nyun/src/components/charts/SalesChart.tsx",
+	"owner": "typescript",
+	"code": "2304",
+	"severity": 8,
+	"message": "Cannot find name 'chartContainerRef'.",
+	"source": "ts",
+	"startLineNumber": 868,
+	"startColumn": 42,
+	"endLineNumber": 868,
+	"endColumn": 59
+},{
+	"resource": "/d:/APLIKASI BY KYZ/nyun/src/components/charts/SalesChart.tsx",
+	"owner": "typescript",
+	"code": "2304",
+	"severity": 8,
+	"message": "Cannot find name 'chartContainerRef'.",
+	"source": "ts",
+	"startLineNumber": 874,
+	"startColumn": 21,
+	"endLineNumber": 874,
+	"endColumn": 38
+},{
+	"resource": "/d:/APLIKASI BY KYZ/nyun/src/components/charts/SalesChart.tsx",
+	"owner": "typescript",
+	"code": "2304",
+	"severity": 8,
+	"message": "Cannot find name 'chartData'.",
+	"source": "ts",
+	"startLineNumber": 878,
+	"startColumn": 13,
+	"endLineNumber": 878,
+	"endColumn": 22
+},{
+	"resource": "/d:/APLIKASI BY KYZ/nyun/src/components/charts/SalesChart.tsx",
+	"owner": "typescript",
+	"code": "2304",
+	"severity": 8,
+	"message": "Cannot find name 'chartData'.",
+	"source": "ts",
+	"startLineNumber": 897,
+	"startColumn": 15,
+	"endLineNumber": 897,
+	"endColumn": 24
+},{
+	"resource": "/d:/APLIKASI BY KYZ/nyun/src/components/charts/SalesChart.tsx",
+	"owner": "typescript",
+	"code": "2304",
+	"severity": 8,
+	"message": "Cannot find name 'activeDataset'.",
+	"source": "ts",
+	"startLineNumber": 909,
+	"startColumn": 18,
+	"endLineNumber": 909,
+	"endColumn": 31
+},{
+	"resource": "/d:/APLIKASI BY KYZ/nyun/src/components/charts/SalesChart.tsx",
+	"owner": "typescript",
+	"code": "2304",
+	"severity": 8,
+	"message": "Cannot find name 'chartData'.",
+	"source": "ts",
+	"startLineNumber": 913,
+	"startColumn": 15,
+	"endLineNumber": 913,
+	"endColumn": 24
+},{
+	"resource": "/d:/APLIKASI BY KYZ/nyun/src/components/charts/SalesChart.tsx",
+	"owner": "typescript",
+	"code": "2304",
+	"severity": 8,
+	"message": "Cannot find name 'activeDataset'.",
+	"source": "ts",
+	"startLineNumber": 925,
+	"startColumn": 18,
+	"endLineNumber": 925,
+	"endColumn": 31
+},{
+	"resource": "/d:/APLIKASI BY KYZ/nyun/src/components/charts/SalesChart.tsx",
+	"owner": "typescript",
+	"code": "2304",
+	"severity": 8,
+	"message": "Cannot find name 'showSMA'.",
+	"source": "ts",
+	"startLineNumber": 927,
+	"startColumn": 11,
+	"endLineNumber": 927,
+	"endColumn": 18
+},{
+	"resource": "/d:/APLIKASI BY KYZ/nyun/src/components/charts/SalesChart.tsx",
+	"owner": "typescript",
+	"code": "2304",
+	"severity": 8,
+	"message": "Cannot find name 'smaPeriod'.",
+	"source": "ts",
+	"startLineNumber": 928,
+	"startColumn": 23,
+	"endLineNumber": 928,
+	"endColumn": 32
+},{
+	"resource": "/d:/APLIKASI BY KYZ/nyun/src/components/charts/SalesChart.tsx",
+	"owner": "typescript",
+	"code": "2304",
+	"severity": 8,
+	"message": "Cannot find name 'smaData'.",
+	"source": "ts",
+	"startLineNumber": 929,
+	"startColumn": 15,
+	"endLineNumber": 929,
+	"endColumn": 22
+},{
+	"resource": "/d:/APLIKASI BY KYZ/nyun/src/components/charts/SalesChart.tsx",
+	"owner": "typescript",
+	"code": "2304",
+	"severity": 8,
+	"message": "Cannot find name 'activeDataset'.",
+	"source": "ts",
+	"startLineNumber": 936,
+	"startColumn": 18,
+	"endLineNumber": 936,
+	"endColumn": 31
+},{
+	"resource": "/d:/APLIKASI BY KYZ/nyun/src/components/charts/SalesChart.tsx",
+	"owner": "typescript",
+	"code": "2304",
+	"severity": 8,
+	"message": "Cannot find name 'showEMA'.",
+	"source": "ts",
+	"startLineNumber": 938,
+	"startColumn": 11,
+	"endLineNumber": 938,
+	"endColumn": 18
+},{
+	"resource": "/d:/APLIKASI BY KYZ/nyun/src/components/charts/SalesChart.tsx",
+	"owner": "typescript",
+	"code": "2304",
+	"severity": 8,
+	"message": "Cannot find name 'emaPeriod'.",
+	"source": "ts",
+	"startLineNumber": 939,
+	"startColumn": 23,
+	"endLineNumber": 939,
+	"endColumn": 32
+},{
+	"resource": "/d:/APLIKASI BY KYZ/nyun/src/components/charts/SalesChart.tsx",
+	"owner": "typescript",
+	"code": "2304",
+	"severity": 8,
+	"message": "Cannot find name 'emaData'.",
+	"source": "ts",
+	"startLineNumber": 940,
+	"startColumn": 15,
+	"endLineNumber": 940,
+	"endColumn": 22
+},{
+	"resource": "/d:/APLIKASI BY KYZ/nyun/src/components/charts/SalesChart.tsx",
+	"owner": "typescript",
+	"code": "2304",
+	"severity": 8,
+	"message": "Cannot find name 'activeDataset'.",
+	"source": "ts",
+	"startLineNumber": 947,
+	"startColumn": 18,
+	"endLineNumber": 947,
+	"endColumn": 31
+},{
+	"resource": "/d:/APLIKASI BY KYZ/nyun/src/components/charts/SalesChart.tsx",
+	"owner": "typescript",
+	"code": "2304",
+	"severity": 8,
+	"message": "Cannot find name 'showRSI'.",
+	"source": "ts",
+	"startLineNumber": 949,
+	"startColumn": 11,
+	"endLineNumber": 949,
+	"endColumn": 18
+},{
+	"resource": "/d:/APLIKASI BY KYZ/nyun/src/components/charts/SalesChart.tsx",
+	"owner": "typescript",
+	"code": "2304",
+	"severity": 8,
+	"message": "Cannot find name 'rsiData'.",
+	"source": "ts",
+	"startLineNumber": 951,
+	"startColumn": 15,
+	"endLineNumber": 951,
+	"endColumn": 22
+},{
+	"resource": "/d:/APLIKASI BY KYZ/nyun/src/components/charts/SalesChart.tsx",
+	"owner": "typescript",
+	"code": "2304",
+	"severity": 8,
+	"message": "Cannot find name 'showPrediction'.",
+	"source": "ts",
+	"startLineNumber": 958,
+	"startColumn": 11,
+	"endLineNumber": 958,
+	"endColumn": 25
+},{
+	"resource": "/d:/APLIKASI BY KYZ/nyun/src/components/charts/SalesChart.tsx",
+	"owner": "typescript",
+	"code": "2304",
+	"severity": 8,
+	"message": "Cannot find name 'prediction'.",
+	"source": "ts",
+	"startLineNumber": 958,
+	"startColumn": 29,
+	"endLineNumber": 958,
+	"endColumn": 39
+},{
+	"resource": "/d:/APLIKASI BY KYZ/nyun/src/components/charts/SalesChart.tsx",
+	"owner": "typescript",
+	"code": "2304",
+	"severity": 8,
+	"message": "Cannot find name 'preparePredictionData'.",
+	"source": "ts",
+	"startLineNumber": 960,
+	"startColumn": 15,
+	"endLineNumber": 960,
+	"endColumn": 36
+},{
+	"resource": "/d:/APLIKASI BY KYZ/nyun/src/components/charts/SalesChart.tsx",
+	"owner": "typescript",
+	"code": "2304",
+	"severity": 8,
+	"message": "Cannot find name 'prediction'.",
+	"source": "ts",
+	"startLineNumber": 961,
+	"startColumn": 22,
+	"endLineNumber": 961,
+	"endColumn": 32
+},{
+	"resource": "/d:/APLIKASI BY KYZ/nyun/src/components/charts/SalesChart.tsx",
+	"owner": "typescript",
+	"code": "2304",
+	"severity": 8,
+	"message": "Cannot find name 'prediction'.",
+	"source": "ts",
+	"startLineNumber": 962,
+	"startColumn": 26,
+	"endLineNumber": 962,
+	"endColumn": 36
+},{
+	"resource": "/d:/APLIKASI BY KYZ/nyun/src/components/charts/SalesChart.tsx",
+	"owner": "typescript",
+	"code": "2304",
+	"severity": 8,
+	"message": "Cannot find name 'showRSI'.",
+	"source": "ts",
+	"startLineNumber": 1000,
+	"startColumn": 18,
+	"endLineNumber": 1000,
+	"endColumn": 25
+},{
+	"resource": "/d:/APLIKASI BY KYZ/nyun/src/components/charts/SalesChart.tsx",
+	"owner": "typescript",
+	"code": "2304",
+	"severity": 8,
+	"message": "Cannot find name 'chartRef'.",
+	"source": "ts",
+	"startLineNumber": 1057,
+	"startColumn": 13,
+	"endLineNumber": 1057,
+	"endColumn": 21
+},{
+	"resource": "/d:/APLIKASI BY KYZ/nyun/src/components/charts/SalesChart.tsx",
+	"owner": "typescript",
+	"code": "2304",
+	"severity": 8,
+	"message": "Cannot find name 'chartRef'.",
+	"source": "ts",
+	"startLineNumber": 1058,
+	"startColumn": 11,
+	"endLineNumber": 1058,
+	"endColumn": 19
+},{
+	"resource": "/d:/APLIKASI BY KYZ/nyun/src/components/charts/SalesChart.tsx",
+	"owner": "typescript",
+	"code": "2304",
+	"severity": 8,
+	"message": "Cannot find name 'chartRef'.",
+	"source": "ts",
+	"startLineNumber": 1059,
+	"startColumn": 11,
+	"endLineNumber": 1059,
+	"endColumn": 19
+},{
+	"resource": "/d:/APLIKASI BY KYZ/nyun/src/components/charts/SalesChart.tsx",
+	"owner": "typescript",
+	"code": "2304",
+	"severity": 8,
+	"message": "Cannot find name 'chartRef'.",
+	"source": "ts",
+	"startLineNumber": 1060,
+	"startColumn": 11,
+	"endLineNumber": 1060,
+	"endColumn": 19
+},{
+	"resource": "/d:/APLIKASI BY KYZ/nyun/src/components/charts/SalesChart.tsx",
+	"owner": "typescript",
+	"code": "2304",
+	"severity": 8,
+	"message": "Cannot find name 'chartRef'.",
+	"source": "ts",
+	"startLineNumber": 1066,
+	"startColumn": 13,
+	"endLineNumber": 1066,
+	"endColumn": 21
+},{
+	"resource": "/d:/APLIKASI BY KYZ/nyun/src/components/charts/SalesChart.tsx",
+	"owner": "typescript",
+	"code": "2304",
+	"severity": 8,
+	"message": "Cannot find name 'chartRef'.",
+	"source": "ts",
+	"startLineNumber": 1067,
+	"startColumn": 11,
+	"endLineNumber": 1067,
+	"endColumn": 19
+},{
+	"resource": "/d:/APLIKASI BY KYZ/nyun/src/components/charts/SalesChart.tsx",
+	"owner": "typescript",
+	"code": "2304",
+	"severity": 8,
+	"message": "Cannot find name 'chartRef'.",
+	"source": "ts",
+	"startLineNumber": 1068,
+	"startColumn": 11,
+	"endLineNumber": 1068,
+	"endColumn": 19
+},{
+	"resource": "/d:/APLIKASI BY KYZ/nyun/src/components/charts/SalesChart.tsx",
+	"owner": "typescript",
+	"code": "1128",
+	"severity": 8,
+	"message": "Declaration or statement expected.",
+	"source": "ts",
+	"startLineNumber": 1238,
+	"startColumn": 1,
+	"endLineNumber": 1238,
+	"endColumn": 2
+}]
+
+4.please repair my problem in file saleschart.tsx and always work step by step without rushing, I expect neat results without errors and functional for all the features in the project
+5.always npm run build dan always npm run start for testing.
+
+

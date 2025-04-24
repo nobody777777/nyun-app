@@ -1,0 +1,25 @@
+/* Fullscreen mode styling */
+.fullscreen-scrollable {
+  overflow-y: auto;
+  max-height: 100vh;
+  background-color: white;
+  padding: 16px;
+  /* Menambahkan scroll snap untuk berhenti tepat di tanggal */
+  scroll-snap-type: y proximity;
+}
+
+.fullscreen-chart {
+  height: calc(100vh - 60px) !important; /* Mengurangi tinggi untuk memastikan tanggal terlihat */
+  scroll-snap-align: start;
+}
+
+.chart-fullscreen-date-spacer {
+  scroll-snap-align: end;
+  height: 40px !important;
+  margin-top: 10px;
+}
+
+/* Membatasi scroll agar tidak terlalu jauh */
+.chart-fullscreen-active {
+  overflow: hidden;
+}
